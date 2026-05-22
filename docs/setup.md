@@ -2,7 +2,7 @@
 
 인스턴스 / 워커 셋업. Phase 1~5 의 실행 절차.
 
-전제: 열린 결정 (O1 repo 이름, O2 도메인 라벨 등) 확정.
+전제: 열린 결정 확정 — O1·O2·O4 완료. O3 (M1 Tailscale 이름) 은 Phase 5 전.
 
 ## OCI 인프라 (Phase 1)
 
@@ -36,7 +36,7 @@ Gateway      Internet GW + NAT GW + Service GW
 
 ### Tenancy
 
-API key 정리. Cloud Guard ON. Notification + 알람 3종 (CPU>80% 10분 / 인스턴스 not RUNNING / Boot vol >85%). Budget alert.
+API key 정리. Cloud Guard / Notification / 알람 3종 / Budget 는 Phase 8 (검증 후) — `tasks.md`.
 
 ### DNS
 
@@ -117,12 +117,12 @@ docker compose up -d
 코드만 git clone, 런타임은 커스텀 이미지:
 
 ```
-git clone <new-repo> /opt/<repo>
+git clone <new-repo> /opt/airflow-stack
 ```
 
 `infra/worker-vm/docker-compose.yml`: 커스텀 이미지로 `airflow edge worker --queues default --concurrency 4`.
 
-- volume: `/opt/<repo>/dags:/opt/airflow/dags:ro`, `/opt/<repo>/src:/opt/airflow/src:ro`
+- volume: `/opt/airflow-stack/dags:/opt/airflow/dags:ro`, `/opt/airflow-stack/src:/opt/airflow/src:ro`
 - env: `PYTHONPATH=/opt/airflow/src` (워커가 `collectors` import), `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1`, JWT, Fernet
 
 코드 갱신 = `git pull` + `docker compose restart`. deps 갱신 = 이미지 재빌드.
@@ -133,8 +133,8 @@ git clone <new-repo> /opt/<repo>
 
 ```
 brew install uv
-git clone <new-repo> ~/Code/<repo>
-cd ~/Code/<repo> && uv sync --frozen
+git clone <new-repo> ~/Code/airflow-stack
+cd ~/Code/airflow-stack && uv sync --frozen
 ```
 
 `uv sync` 가 `apache-airflow` + `apache-airflow-providers-edge3` + 도메인 deps 설치. 컨테이너 vs 호스트 직접은 Docker Desktop on M1 부담 평가 후 결정.
@@ -143,7 +143,7 @@ cd ~/Code/<repo> && uv sync --frozen
 
 `~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist`:
 - Label: `<reverse-domain>.airflow-worker` (본인 도메인 reverse-DNS)
-- WorkingDirectory: `~/Code/<repo>`
+- WorkingDirectory: `~/Code/airflow-stack`
 - EnvVars: `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1`, JWT, Fernet
 - ProgramArguments: `[<uv 절대경로>, run, airflow, edge, worker, --queues, mac, --concurrency, 2]`
   (launchd 는 PATH 없음 — `uv` 절대경로 필수. 예: `/opt/homebrew/bin/uv`)

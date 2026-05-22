@@ -4,7 +4,7 @@
 
 **Phase 0 시작 전 — 문서화 진행 중.**
 
-다음 액션: 열린 결정 O1~O4 답 확정 → Phase 0.
+다음 액션: Phase 0 시작. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -21,7 +21,6 @@
 - [ ] ops-vm (2 OCPU/12GB) + worker-vm (2 OCPU/12GB) 프로비저닝
 - [ ] Boot volume Bronze 백업
 - [ ] DNS `airflow.<your-domain>` A 레코드
-- [ ] Cloud Guard / Notification / 알람 3종 / Budget (O4)
 
 ## Phase 2 — 호스트 부트스트랩
 
@@ -76,6 +75,12 @@
 - [ ] M1 power-cycle 시 mac queue 자연 복귀
 - [ ] M1 sleep 중 in-flight task 가 zombie 처리 후 retry 되는지 확인
 - [ ] 옛 repo README archive 표기
+
+## Phase 8 — 모니터링 (Phase 7 검증 후)
+
+- [ ] Cloud Guard ON
+- [ ] Notification + 알람 3종 (CPU>80% 10분 / 인스턴스 not RUNNING / Boot vol >85%)
+- [ ] Budget alert
 
 ## 미래
 

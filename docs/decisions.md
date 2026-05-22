@@ -25,6 +25,8 @@
 | L18 | OCI 자원 균등 — ops-vm·worker-vm 각 2 OCPU / 12 GB | A1.Flex 무료 한도 4+24 안. 컨트롤 플레인 peak 4 GB 추정 |
 | L19 | 컨트롤 플레인·워커 = 커스텀 이미지 (`apache/airflow:3.2.x` + edge3 + 도메인 deps) | 공식 이미지에 edge3·도메인 deps 미포함 |
 | L20 | 워커 → 컨트롤 플레인 = Tailscale 직결 HTTP (v1) | Tailscale 가 암호화 채널. cert 불필요, edge API 공개 노출 회피 |
+| L21 | 공개 repo 이름 = `airflow-stack` | 로컬 디렉토리·README 와 일치, rename 불필요 |
+| L22 | 공인 도메인 라벨 = `airflow` (`airflow.<your-domain>`) | 명확·직관 |
 
 L12 는 R1 (워크로드 모델링) 으로 이동.
 
@@ -45,7 +47,6 @@ R3 주의: SimpleAuthManager 는 Apache 공식 문서가 "dev/test 전용, produ
 
 | # | 질문 | 비고 |
 |---|---|---|
-| O1 | 새 repo 이름 | 옛 식별자 / n8n 잔재 금지 |
-| O2 | 공인 도메인 라벨 | `airflow.<your-domain>` 권장 |
-| O3 | M1 Tailscale 이름 노출 | MagicDNS 기본 또는 별명 |
-| O4 | Cloud Guard / 알람 시점 | Phase 1 끝 일괄 (잠정) |
+| O3 | M1 Tailscale 이름 노출 | MagicDNS 기본 또는 별명. Phase 5 전까지 보류 |
+
+O1·O2 → 잠긴 결정 (L21·L22). O4 (모니터링 시점) → Phase 7 검증 후로 결정, `tasks.md` Phase 8.
