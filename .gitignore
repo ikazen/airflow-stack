@@ -1,0 +1,15 @@
+# Secrets — repo 외 보관 (docs/setup.md)
+.env
+.env.*
+!.env.example
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# OS
+.DS_Store
