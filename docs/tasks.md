@@ -2,9 +2,9 @@
 
 ## 현재 상태
 
-**Phase 1 — OCI 인프라 프로비저닝 완료 (2026-05-22). DNS 레코드는 수동.**
+**Phase 2 — 호스트 부트스트랩 완료 (2026-05-23). M1 Tailscale 가입은 Phase 5 전 수동.**
 
-다음 액션: Phase 2 (호스트 부트스트랩). 병행 수동 — DNS `n8n` 제거 + `airflow` A레코드 추가, 옛 repo archive. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: Phase 3 (컨트롤 플레인 ops-vm). 병행 수동 — DNS `n8n` 제거 + `airflow` A레코드 추가, 옛 repo archive. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -24,10 +24,10 @@
 
 ## Phase 2 — 호스트 부트스트랩
 
-- [ ] `scripts/host-setup.sh` (swap, Docker + Compose, fail2ban, unattended-upgrades)
-- [ ] Tailscale 3 노드 가입
-- [ ] Tailscale ACL — SSH tailnet 만, ops-vm 443/80 공인
-- [ ] OCI NSG SSH 룰 본인 IP /32 fallback 만
+- [x] `scripts/host-setup.sh` (swap, Docker + Compose, unattended-upgrades) — 양쪽 VM 완료 (2026-05-22)
+- [x] Tailscale ops-vm·worker-vm 가입 (2026-05-23). M1 은 Phase 5 전 수동
+- [x] Tailscale ACL — 단일 사용자, 기본값으로 충분
+- [x] worker-nsg 임시 SSH 룰 제거. ops-nsg 본인 IP /32 fallback 유지
 
 ## Phase 3 — 컨트롤 플레인 (ops-vm)
 
