@@ -35,4 +35,4 @@ scripts/               (Phase 2+) host-setup 등
 
 ## 현재 상태
 
-Phase 0 시작 전. 문서화 진행 중.
+Phase 0 진행 중. 옛 OCI 자산 정리 완료, 수동 항목(DNS·repo archive) 남음.

@@ -2,17 +2,17 @@
 
 ## 현재 상태
 
-**Phase 0 시작 전 — 문서화 진행 중.**
+**Phase 0 진행 중 — OCI 옛 자산 정리 완료. 수동 항목(DNS·repo archive) 남음.**
 
-다음 액션: Phase 0 시작. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: DNS `n8n` 레코드 제거 + 옛 repo archive → Phase 1. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
-- [ ] 옛 n8n 워크플로 export 마지막 백업
-- [ ] 옛 OCI Instance → Boot Volume → VNIC → Subnet → VCN → 컴파트먼트 termination
-- [ ] DNS 의 `<previous-subdomain>.<your-domain>` 제거
-- [ ] 옛 OCI API key 회수
-- [ ] 옛 repo archive 메모
+- [x] ~~옛 n8n 워크플로 export 백업~~ — 불필요, 생략
+- [x] 옛 OCI 인스턴스·Boot 볼륨·VCN 일체 termination (2026-05-22). 하위 컴파트먼트 없음 → 컴파트먼트 termination 해당 없음
+- [x] 옛 OCI API key 회수 (2026-05-22 — 미사용 2개 삭제, 현용 1개 유지)
+- [ ] DNS `n8n.<your-domain>` 레코드 제거 — 외부 DNS, 콘솔에서 수동
+- [ ] 옛 repo archive 표기 — 옛 GitHub repo README, 수동
 
 ## Phase 1 — OCI 재구축
 
