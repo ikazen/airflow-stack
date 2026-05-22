@@ -2,17 +2,17 @@
 
 ## 현재 상태
 
-**Phase 2 — 호스트 부트스트랩 완료 (2026-05-23). M1 Tailscale 가입은 Phase 5 전 수동.**
+**Phase 3 — 컨트롤 플레인 완료 (2026-05-23). `https://airflow.<your-domain>` 접속 확인.**
 
-다음 액션: Phase 3 (컨트롤 플레인 ops-vm). 병행 수동 — DNS `n8n` 제거 + `airflow` A레코드 추가, 옛 repo archive. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: Phase 4 (안정 워커 worker-vm). O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
 - [x] ~~옛 n8n 워크플로 export 백업~~ — 불필요, 생략
 - [x] 옛 OCI 인스턴스·Boot 볼륨·VCN 일체 termination (2026-05-22). 하위 컴파트먼트 없음 → 컴파트먼트 termination 해당 없음
 - [x] 옛 OCI API key 회수 (2026-05-22 — 미사용 2개 삭제, 현용 1개 유지)
-- [ ] DNS `n8n.<your-domain>` 레코드 제거 — 외부 DNS, 콘솔에서 수동
-- [ ] 옛 repo archive 표기 — 옛 GitHub repo README, 수동
+- [x] DNS `n8n.<your-domain>` 레코드 제거 — 외부 DNS, 콘솔에서 수동
+- [x] 옛 repo archive 표기 — 옛 GitHub repo README, 수동
 
 ## Phase 1 — OCI 재구축
 
@@ -20,7 +20,7 @@
 - [x] reserved public IP (ops-vm)
 - [x] ops-vm + worker-vm 프로비저닝 (A1.Flex 2/12, boot 125/75 GB)
 - [x] ~~Boot volume 백업~~ — 안 함 (전체 disposable, L10)
-- [ ] DNS `airflow.<your-domain>` A 레코드 — 외부 DNS, 수동
+- [x] DNS `airflow.<your-domain>` A 레코드 — 외부 DNS, 수동
 
 ## Phase 2 — 호스트 부트스트랩
 
@@ -31,15 +31,14 @@
 
 ## Phase 3 — 컨트롤 플레인 (ops-vm)
 
-- [ ] `infra/airflow.Dockerfile`: `apache/airflow:3.2.x` + `apache-airflow-providers-edge3` + 도메인 deps (constraints 핀)
-- [ ] `infra/ops-vm/docker-compose.yml`: postgres + (커스텀 이미지) api-server + scheduler + dag-processor + caddy
-- [ ] env: EdgeExecutor / DB conn / Fernet / auth manager / Edge API URL / JWT secret
-- [ ] DB 초기화: `airflow db migrate` (init 서비스 또는 1회 실행)
-- [ ] admin: `simple_auth_manager_users` 설정. 비번은 Airflow 자동 생성 → `simple_auth_manager_passwords.json.generated` 확인
-- [ ] `dags/` 폴더 (dag-processor 가 읽음)
-- [ ] Caddyfile (TLS 만. 사람용 UI 만 공개, `/edge_worker/*` 비공개 — L20)
-- [ ] `.env` 시크릿 (repo 외 보관)
-- [ ] `docker compose up -d` → `https://airflow.<your-domain>` 접속 확인
+- [x] `infra/airflow.Dockerfile`: `apache/airflow:3.2.1` + `apache-airflow-providers-edge3==3.4.0`
+- [x] `infra/ops-vm/docker-compose.yml`: postgres + api-server + scheduler + dag-processor + caddy
+- [x] env: EdgeExecutor / DB conn / Fernet / auth manager / Edge API URL / JWT secret (`.env`, repo 외)
+- [x] DB 초기화: `airflow db migrate` (airflow-init 서비스)
+- [x] admin: `AIRFLOW__SIMPLE_AUTH_MANAGER__USERS=admin`. 비번 자동 생성 → `docker exec api-server cat .../simple_auth_manager_passwords.json.generated`
+- [x] `dags/` 폴더 생성
+- [x] Caddyfile: `/edge_worker/*` 차단, 나머지 api-server:8080 프록시
+- [x] `docker compose up -d` → `https://airflow.<your-domain>` HTTP 200 확인 (2026-05-23)
 
 ## Phase 4 — 안정 워커 (worker-vm)
 
