@@ -1,0 +1,11 @@
+services:
+  edge-worker:
+    build:
+      context: ../..
+      dockerfile: infra/airflow.Dockerfile
+    env_file: .env
+    network_mode: host
+    command: airflow edge worker --queues default --concurrency 4
+    volumes:
+      - ../../dags:/opt/airflow/dags:ro
+    restart: unless-stopped
