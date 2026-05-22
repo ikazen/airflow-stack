@@ -7,7 +7,7 @@
 | # | 결정 | 근거 |
 |---|---|---|
 | L1 | Airflow 3.2.x (self-host, OSS) | 5년 Airflow 2 자산 + 3.0 진화 학습 |
-| L2 | 옛 `<previous-stack>` 스택 폐기 | 잔존 가치 0 |
+| L2 | 옛 n8n 스택 폐기 | 잔존 가치 0 |
 | L3 | ops-vm (공인) + worker-vm (사설) + M1 (intermittent) | 항상성·노출·자원 매핑 |
 | L4 | Edge Executor (`apache-airflow-providers-edge3`) | Celery+broker 부담 0, NAT 뒤 워커 자연 동작 |
 | L5 | Tailscale (MagicDNS + ACL) | NAT 뒤 outbound-only fit |
@@ -45,7 +45,7 @@ R3 주의: SimpleAuthManager 는 Apache 공식 문서가 "dev/test 전용, produ
 
 | # | 질문 | 비고 |
 |---|---|---|
-| O1 | 새 repo 이름 | 옛 식별자 / `<previous-stack>` 잔재 금지 |
+| O1 | 새 repo 이름 | 옛 식별자 / n8n 잔재 금지 |
 | O2 | 공인 도메인 라벨 | `airflow.<your-domain>` 권장 |
 | O3 | M1 Tailscale 이름 노출 | MagicDNS 기본 또는 별명 |
 | O4 | Cloud Guard / 알람 시점 | Phase 1 끝 일괄 (잠정) |

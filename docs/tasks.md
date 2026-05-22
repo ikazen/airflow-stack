@@ -8,7 +8,7 @@
 
 ## Phase 0 — 옛 자산 정리
 
-- [ ] 옛 `<previous-stack>` 워크플로 export 마지막 백업
+- [ ] 옛 n8n 워크플로 export 마지막 백업
 - [ ] 옛 OCI Instance → Boot Volume → VNIC → Subnet → VCN → 컴파트먼트 termination
 - [ ] DNS 의 `<previous-subdomain>.<your-domain>` 제거
 - [ ] 옛 OCI API key 회수

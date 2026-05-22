@@ -14,7 +14,7 @@
 
 ## lol-list 결정 — v1 = 전통 `@dag`
 
-옛 `<previous-stack>` 시절 (KST):
+옛 n8n 시절 (KST):
 
 | 잡 | cron | 동작 |
 |---|---|---|
@@ -24,7 +24,7 @@
 
 전통 DAG 채택 근거:
 - 외부 → Supabase UPSERT 의 단순 흐름. dependency 거의 없음
-- 옛 `<previous-stack>` 잡 3개 → DAG 3개 매핑 직관, 이관 부담 최소
+- 옛 n8n 잡 3개 → DAG 3개 매핑 직관, 이관 부담 최소
 - UPSERT 멱등 → asset 의 "state" 추상화 가치 낮음
 - Airflow 3 의 진짜 가치 (Edge Executor / Task SDK / DAG Versioning) 는 모델링과 독립
 
