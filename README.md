@@ -16,6 +16,7 @@ docs/                  설계 / 결정 / 운영 문서
   decisions.md         잠긴 결정 / 재고 가능 / 열린 결정
   tasks.md             Phase 0~7 진행
   setup.md             셋업 절차
+  spec.md              DB 스키마·API 스펙 (Phase 6+)
   runbook.md           정상 운영 절차 (stub)
   troubleshooting.md   문제 진단·해결 사례 (stub)
   asset-model.md       워크로드 모델링 가이드

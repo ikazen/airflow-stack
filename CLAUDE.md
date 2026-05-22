@@ -37,7 +37,7 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 
 ## 코드 배포 (v1)
 
-전 호스트에 git clone + uv venv. 변경 = 각 호스트 `git pull` + 영향 컨테이너 / launchd restart.
+전 호스트에 git clone (코드 운반). 런타임 = edge3 포함 커스텀 이미지 컨테이너 (M1 은 Phase 5 결정). 변경 = 각 호스트 `git pull` + 영향 컨테이너 / launchd restart.
 
 ## 의존성
 

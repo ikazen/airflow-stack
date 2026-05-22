@@ -13,7 +13,7 @@
 ### Edge Executor
 - 2.x: Celery + Redis broker + Flower (운영 피곤의 본체)
 - 3.x: HTTPS long-poll 한 채널. broker 0. NAT 뒤 워커 자연
-- provider: `apache-airflow-providers-edge`
+- provider: `apache-airflow-providers-edge3` (Airflow 3 용 — 끝에 `3`). executor: `airflow.providers.edge3.executors.EdgeExecutor`
 
 ### DAG Versioning
 - 2.x: 현재 DAG 파일 = 단일 진실. 과거 run 코드 추적 어려움
@@ -30,7 +30,8 @@
 
 ### Auth Manager
 - 2.x: FAB RBAC 가 사실상 기본
-- 3.x: `simple_auth_manager` 등장 (단일 사용자에 적합). FAB 는 `FabAuthManager` 로 분리
+- 3.x: `SimpleAuthManager` 가 기본. 단 공식 문서가 dev/test 전용·production 비권장 명시 (`decisions.md` R3). FAB 는 `FabAuthManager` 로 분리
+- 경로: `airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager`. 2FA·RBAC 없음
 
 ### Constraints
 - 3.2.x 라인: `-c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt`
@@ -43,4 +44,4 @@
 - Edge Worker 의 registration / heartbeat 동작 (UI 디테일)
 - DAG Versioning 의 retention (old version store size)
 - M1 sleep/wake 시 edge worker 재연결 latency
-- `EdgeExecutor` import path 가 3.2.x 진행 중 변동될 가능성 — 확인 시점 기록
+- `EdgeExecutor` import path 확인 완료 (2026-05): provider `apache-airflow-providers-edge3`, executor `airflow.providers.edge3.executors.EdgeExecutor`
