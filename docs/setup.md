@@ -9,7 +9,8 @@
 ### VCN / 서브넷
 
 ```
-VCN          <vcn-name>
+컴파트먼트   main
+VCN          main-vcn
 CIDR         10.0.0.0/16
 public       10.0.0.0/24  (ops-vm)
 private      10.0.1.0/24  (worker-vm)
@@ -31,7 +32,7 @@ Gateway      Internet GW + NAT GW + Service GW
 |---|---|---|
 | Shape | A1.Flex 2/12 GB | A1.Flex 2/12 GB |
 | OS | Ubuntu 22.04 ARM | Ubuntu 22.04 ARM |
-| Boot | 100 GB Bronze | 50 GB Bronze |
+| Boot | 125 GB | 75 GB |
 | Public IP | reserved | 없음 |
 
 ### Tenancy

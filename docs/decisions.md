@@ -15,7 +15,7 @@
 | L7 | Postgres 16 on ops-vm (`airflow` DB) | self-host 정공 |
 | L8 | docker compose (호스트별 1) | k8s 도입 안 함 |
 | L9 | M1 = launchd LaunchAgent | macOS 표준 |
-| L10 | OCI Boot Volume Bronze 백업, 앱 백업 없음 | DAG/asset 은 코드. Connection/Variable 미사용 → 메타 DB disposable, 손실 시 재배포 |
+| L10 | 백업 안 함 (boot volume·앱 전부) | 코드·DAG 는 git, Connection/Variable 미사용으로 메타 DB disposable. 손실 시 재배포 복구 |
 | L11 | SSH 공개 폐지, 본인 IP /32 fallback | audit Critical 해소 |
 | L13 | 코드 배포 = 전 호스트 git clone + git pull (v1) | 최소 운반 |
 | L14 | Airflow 내장 auth + 단일 admin. Caddy TLS 만 | 단일 사용자 환경 |

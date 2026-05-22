@@ -2,9 +2,9 @@
 
 ## 현재 상태
 
-**Phase 0 진행 중 — OCI 옛 자산 정리 완료. 수동 항목(DNS·repo archive) 남음.**
+**Phase 1 — OCI 인프라 프로비저닝 완료 (2026-05-22). DNS 레코드는 수동.**
 
-다음 액션: DNS `n8n` 레코드 제거 + 옛 repo archive → Phase 1. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: Phase 2 (호스트 부트스트랩). 병행 수동 — DNS `n8n` 제거 + `airflow` A레코드 추가, 옛 repo archive. O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -16,11 +16,11 @@
 
 ## Phase 1 — OCI 재구축
 
-- [ ] 새 컴파트먼트 / VCN / 서브넷 / NSG / Gateway / Route table
-- [ ] reserved public IP (ops-vm)
-- [ ] ops-vm (2 OCPU/12GB) + worker-vm (2 OCPU/12GB) 프로비저닝
-- [ ] Boot volume Bronze 백업
-- [ ] DNS `airflow.<your-domain>` A 레코드
+- [x] 컴파트먼트 `main` / VCN `main-vcn` / 서브넷 2 / NSG 2 / Gateway 3 / Route table (2026-05-22)
+- [x] reserved public IP (ops-vm)
+- [x] ops-vm + worker-vm 프로비저닝 (A1.Flex 2/12, boot 125/75 GB)
+- [x] ~~Boot volume 백업~~ — 안 함 (전체 disposable, L10)
+- [ ] DNS `airflow.<your-domain>` A 레코드 — 외부 DNS, 수동
 
 ## Phase 2 — 호스트 부트스트랩
 

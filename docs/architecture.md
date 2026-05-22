@@ -50,7 +50,7 @@
 | 항목 | ops-vm | worker-vm |
 |---|---|---|
 | Shape / OCPU / RAM | A1.Flex 2 / 12 GB | A1.Flex 2 / 12 GB |
-| Boot Volume | 100 GB (Bronze) | 50 GB (Bronze) |
+| Boot Volume | 125 GB | 75 GB |
 | Public IP | reserved | 없음 |
 | Subnet | public | private |
 

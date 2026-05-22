@@ -10,6 +10,6 @@
 - 코드 배포 v1 절차 (push → 각 호스트 `git pull` → 영향 컨테이너 / launchd restart)
 - 워커 재기동 (worker-vm container restart / M1 launchctl unload+load)
 - Secrets 회전 (Fernet / JWT / Postgres pw)
-- Postgres 백업 / 복원 (Bronze RPO/RTO + 메타 손실 시 재배포 시나리오)
+- 인스턴스 / 메타 손실 시 재배포 복구 절차 (백업 없음 — decisions.md L10)
 - Caddy LE 인증서 갱신 검증
 - Tailscale 노드 키 갱신 / ACL 변경 적용
