@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+simple_auth_manager_passwords.json
 
 # Claude Code 로컬 설정
 .claude/settings.local.json
