@@ -2,9 +2,9 @@
 
 ## 현재 상태
 
-**Phase 3 — 컨트롤 플레인 완료 (2026-05-23). `https://airflow.<your-domain>` 접속 확인.**
+**Phase 4 — 안정 워커 완료 (2026-05-23). edge worker healthy, Edge Executor UI 정상.**
 
-다음 액션: Phase 4 (안정 워커 worker-vm). O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: Phase 5 (M1 워커) 또는 Phase 6 (lol-list 이관). O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -31,22 +31,22 @@
 
 ## Phase 3 — 컨트롤 플레인 (ops-vm)
 
-- [x] `infra/airflow.Dockerfile`: `apache/airflow:3.2.1` + `apache-airflow-providers-edge3==3.4.0`
+- [x] `infra/airflow.Dockerfile`: `apache/airflow:3.2.1` + `apache-airflow-providers-edge3>=3.5.0` (현재 3.6.0)
 - [x] `infra/ops-vm/docker-compose.yml`: postgres + api-server + scheduler + dag-processor + caddy
 - [x] env: EdgeExecutor / DB conn / Fernet / auth manager / Edge API URL / JWT secret (`.env`, repo 외)
 - [x] DB 초기화: `airflow db migrate` (airflow-init 서비스)
 - [x] admin: `AIRFLOW__SIMPLE_AUTH_MANAGER__USERS=admin`. 비번 자동 생성 → `docker exec api-server cat .../simple_auth_manager_passwords.json.generated`
 - [x] `dags/` 폴더 생성
-- [x] Caddyfile: `/edge_worker/*` 차단, 나머지 api-server:8080 프록시
+- [x] Caddyfile: `/edge_worker/v1/*` 차단 (Tailscale 직결 전용), 나머지 api-server:8080 프록시
 - [x] `docker compose up -d` → `https://airflow.<your-domain>` HTTP 200 확인 (2026-05-23)
 
 ## Phase 4 — 안정 워커 (worker-vm)
 
-- [ ] git clone (dags/ + src/ 코드 운반)
-- [ ] `infra/worker-vm/docker-compose.yml`: 커스텀 이미지로 `airflow edge worker --queues default --concurrency 4`
-- [ ] repo 마운트: `dags/` → DAG, `src/` → `PYTHONPATH` (워커가 `collectors` import)
-- [ ] env: Edge API URL (Tailscale 경로), JWT, Fernet
-- [ ] UI Edge Workers 탭 healthy 확인
+- [x] git clone (dags/ 코드 운반)
+- [x] `infra/worker-vm/docker-compose.yml`: 커스텀 이미지로 `airflow edge worker --queues default --concurrency 4`
+- [x] env: Edge API URL (Tailscale 경로), JWT, Fernet (`.env`, repo 외)
+- [x] edge worker → api-server 연결 확인 (5초 polling, 200 OK)
+- [x] Edge Executor UI (`/plugin/edge_executor`) 정상 (2026-05-23)
 - [ ] dummy task 라우팅 확인
 
 ## Phase 5 — M1 워커 (macbook)
