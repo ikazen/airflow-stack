@@ -1,6 +1,6 @@
 airflow.<your-domain> {
-    # edge worker 경로는 Tailscale 직결 (포트 8080) — 공인 노출 차단
-    handle /edge_worker/* {
+    # edge worker v1 API — Tailscale 직결 전용, 공인 노출 차단
+    handle /edge_worker/v1/* {
         respond 404
     }
 
