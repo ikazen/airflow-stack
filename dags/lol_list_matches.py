@@ -7,14 +7,14 @@ from airflow.sdk import Variable, dag, task
 
 
 @dag(
-    dag_id="lol_list_matches",
+    dag_id="sync_matches",
     start_date=datetime(2026, 5, 23),
     schedule="*/10 * * * *",
     catchup=False,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=2)},
     tags=["lol-list"],
 )
-def lol_list_matches() -> None:
+def sync_matches() -> None:
 
     @task(queue="default")
     def sync() -> None:
@@ -26,4 +26,4 @@ def lol_list_matches() -> None:
     sync()
 
 
-lol_list_matches()
+sync_matches()

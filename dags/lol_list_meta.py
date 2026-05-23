@@ -7,14 +7,14 @@ from airflow.sdk import Variable, dag, task
 
 
 @dag(
-    dag_id="lol_list_meta",
+    dag_id="sync_lol_meta",
     start_date=datetime(2026, 5, 23),
     schedule="0 15 * * *",  # KST 00:00
     catchup=False,
     default_args={"retries": 1, "retry_delay": timedelta(minutes=10)},
     tags=["lol-list"],
 )
-def lol_list_meta() -> None:
+def sync_lol_meta() -> None:
 
     def _inject() -> None:
         os.environ["SUPABASE_URL"] = Variable.get("supabase_url")
@@ -42,4 +42,4 @@ def lol_list_meta() -> None:
     sync_leagues() >> [sync_matches_force(), sync_liquipedia_force()]
 
 
-lol_list_meta()
+sync_lol_meta()

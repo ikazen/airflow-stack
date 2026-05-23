@@ -7,14 +7,14 @@ from airflow.sdk import Variable, dag, task
 
 
 @dag(
-    dag_id="lol_list_liquipedia",
+    dag_id="sync_liquipedia",
     start_date=datetime(2026, 5, 23),
     schedule="*/15 * * * *",
     catchup=False,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=5)},
     tags=["lol-list"],
 )
-def lol_list_liquipedia() -> None:
+def sync_liquipedia() -> None:
 
     @task(queue="default")
     def sync() -> None:
@@ -26,4 +26,4 @@ def lol_list_liquipedia() -> None:
     sync()
 
 
-lol_list_liquipedia()
+sync_liquipedia()
