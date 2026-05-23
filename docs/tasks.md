@@ -62,7 +62,7 @@
 - [x] `.env` 작성 (ops-vm JWT/Fernet 동일값, Tailscale 경로)
 - [x] `docker compose up -d` → DB 에 `mac-server` idle 등록 확인 (2026-05-23)
 - [x] UI Edge Workers 탭 시각 확인 (2026-05-23)
-- [ ] `queue="gpu"` dummy task 라우팅 검증 (test_environment DAG)
+- [x] `queue="gpu"` dummy task 라우팅 검증 — test_environment 3 task 모두 success, gpu→mac-server 정확 (2026-05-24)
 - [x] LaunchAgent: `local.airflow.colima` colima 자동 시동 (2026-05-23). edge worker 는 compose `restart: unless-stopped` 가 처리. 절차 `docs/runbook.md`
 - [ ] sleep/wake 후 worker 자연 복귀 확인 (Phase 7 검증과 합쳐도 됨)
 
