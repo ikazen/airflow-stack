@@ -60,7 +60,25 @@ def test_environment() -> None:
         print(f"disk      : total={total >> 30}GB  used={used >> 30}GB  free={free >> 30}GB")
         print(f"api url   : {os.getenv('AIRFLOW__EDGE__API_URL', '-')}")
 
-    main_node_env() >> worker_node_env()
+    @task(queue="gpu")
+    def gpu_node_env() -> None:
+        """mac-server (gpu 큐 edge worker, Colima Linux VM) 실행 환경"""
+        import airflow
+
+        try:
+            edge3_ver = version("apache-airflow-providers-edge3")
+        except PackageNotFoundError:
+            edge3_ver = "not installed"
+
+        print("=== gpu node (mac-server / colima VM) ===")
+        print(f"hostname  : {socket.gethostname()}")
+        print(f"platform  : {platform.platform()}")
+        print(f"python    : {sys.version.split()[0]}")
+        print(f"airflow   : {airflow.__version__}")
+        print(f"edge3     : {edge3_ver}")
+        print(f"api url   : {os.getenv('AIRFLOW__EDGE__API_URL', '-')}")
+
+    main_node_env() >> worker_node_env() >> gpu_node_env()
 
 
 test_environment()
