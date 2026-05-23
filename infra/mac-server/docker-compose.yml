@@ -1,0 +1,13 @@
+services:
+  edge-worker:
+    build:
+      context: ../..
+      dockerfile: infra/airflow.Dockerfile
+    env_file: .env
+    command: airflow edge worker --queues mac --concurrency 2
+    environment:
+      PYTHONPATH: /opt/airflow/lol-list
+    volumes:
+      - ../../dags:/opt/airflow/dags:ro
+      - ${LOL_LIST_PATH}:/opt/airflow/lol-list:ro
+    restart: unless-stopped
