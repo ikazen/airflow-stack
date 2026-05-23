@@ -81,6 +81,7 @@ services:
     environment:
       # Docker 내부망으로 직결 — Tailscale 경유 불필요
       AIRFLOW__EDGE__API_URL: http://api-server:8080/edge_worker/v1/rpcapi
+    hostname: ops-vm
     command: airflow edge worker --queues ops --concurrency 2
     volumes:
       - ../../dags:/opt/airflow/dags:ro
