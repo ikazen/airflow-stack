@@ -21,7 +21,7 @@
         │ Tailscale
 ┌──────────────────────────────────────────────────────────────┐
 │  macbook  (M1, 가정 NAT, intermittent, 10-core / 32 GB)      │
-│   edge worker --queues mac (launchd) · uv venv · Tailscale   │
+│   edge worker --queues gpu,default (launchd) · Tailscale     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -34,10 +34,11 @@
 
 ## Queue
 
-| queue | 위치 | 라우팅 |
+| queue | 구독 worker | 라우팅 |
 |---|---|---|
-| `default` | worker-vm | 미지정 task 의 기본 |
-| `mac` | M1 | `queue="mac"` 명시한 task. 가용성 가정 금지 |
+| `default` | worker-vm · ops-vm · mac-server | 미지정 task 의 기본 |
+| `ops` | ops-vm | control-plane 작업 (예: deploy DAG) |
+| `gpu` | mac-server | `queue="gpu"` 명시. GPU / Neural Engine 활용. M1 가용성 가정 금지 |
 
 ## 네트워크 흐름
 

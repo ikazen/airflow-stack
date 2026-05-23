@@ -53,7 +53,7 @@
 
 - [ ] uv + Python 3.12, git clone, `uv sync --frozen` (edge3 포함)
 - [ ] 컨테이너 vs 호스트 직접 결정 (Docker Desktop 부담 평가)
-- [ ] `~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist`: `--queues mac --concurrency 2`, KeepAlive, RunAtLoad
+- [ ] `~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist`: `--queues gpu,default --concurrency 8`, KeepAlive, RunAtLoad
 - [ ] `launchctl load`
 - [ ] UI `mac` queue healthy, sleep/wake 자동 복귀 확인
 
@@ -76,7 +76,7 @@
 - [ ] 첫 자동 run 성공 (UI DagRun)
 - [ ] 24시간 안정 동작
 - [ ] DAG Versioning UI 확인 (코드 변경 → 새 version)
-- [ ] M1 power-cycle 시 mac queue 자연 복귀
+- [ ] M1 power-cycle 시 gpu queue 자연 복귀
 - [ ] M1 sleep 중 in-flight task 가 zombie 처리 후 retry 되는지 확인
 - [ ] 옛 repo README archive 표기
 

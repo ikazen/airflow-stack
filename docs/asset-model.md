@@ -63,7 +63,7 @@ sync_matches()
 
 - cron 은 `start_date` 의 timezone (KST) 에서 해석됨. `@dag` 에 `timetable_kwargs` 같은 인자는 없음 — timezone 은 tz-aware `start_date` 로 (또는 `CronTriggerTimetable(timezone=...)`)
 - `@dag` 함수는 모듈 끝에서 호출(`sync_matches()`)해야 dag-processor 가 발견
-- `retries` 필수: 외부 사이트 호출이라 transient 실패 대비. 특히 `queue="mac"` task 는 M1 intermittent → retry 없으면 M1 sleep 중 그냥 실패
+- `retries` 필수: 외부 사이트 호출이라 transient 실패 대비. 특히 `queue="gpu"` task 는 M1 intermittent → retry 없으면 M1 sleep 중 그냥 실패
 
 `sync_liquipedia`, `sync_meta` 동일 패턴. `sync_meta` 는 일별 단일 task 로 3 종 강제 호출.
 

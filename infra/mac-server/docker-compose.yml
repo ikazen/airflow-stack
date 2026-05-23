@@ -4,7 +4,7 @@ services:
       context: ../..
       dockerfile: infra/airflow.Dockerfile
     env_file: .env
-    command: airflow edge worker --queues mac --concurrency 2
+    command: airflow edge worker --queues gpu,default --concurrency 8
     environment:
       PYTHONPATH: /opt/airflow/lol-list
     volumes:

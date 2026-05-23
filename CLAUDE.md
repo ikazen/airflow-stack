@@ -29,7 +29,7 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 ## Queue
 
 - `default` (worker-vm) — 미지정 task 의 기본
-- `mac` (M1, intermittent) — 큰 RAM / GPU 필요 시 명시 지정. M1 가용성 가정 금지
+- `gpu` (M1, intermittent) — GPU / Neural Engine 필요 시 명시 지정. M1 가용성 가정 금지. mac-server 는 `gpu,default` 둘 다 구독 (가용 시 default task 도 흡수)
 
 ## 네트워크
 

@@ -146,7 +146,7 @@ cd ~/Code/airflow-stack && uv sync --frozen
 - Label: `<reverse-domain>.airflow-worker` (본인 도메인 reverse-DNS)
 - WorkingDirectory: `~/Code/airflow-stack`
 - EnvVars: `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1`, JWT, Fernet
-- ProgramArguments: `[<uv 절대경로>, run, airflow, edge, worker, --queues, mac, --concurrency, 2]`
+- ProgramArguments: `[<uv 절대경로>, run, airflow, edge, worker, --queues, gpu,default, --concurrency, 8]`
   (launchd 는 PATH 없음 — `uv` 절대경로 필수. 예: `/opt/homebrew/bin/uv`)
 - KeepAlive / RunAtLoad: true
 - Logs: `~/Library/Logs/airflow-worker-{out,err}.log`
@@ -155,7 +155,7 @@ cd ~/Code/airflow-stack && uv sync --frozen
 launchctl load ~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist
 ```
 
-검증: UI mac queue healthy. sleep/wake 자동 복귀.
+검증: UI gpu queue healthy. sleep/wake 자동 복귀.
 
 ## Secrets
 
