@@ -2,9 +2,9 @@
 
 ## 현재 상태
 
-**Phase 4 — 안정 워커 완료 (2026-05-23). edge worker healthy, Edge Executor UI 정상.**
+**Phase 6 — lol-list 이관 완료 (2026-05-23). 3개 DAG 엔드투엔드 검증 완료.**
 
-다음 액션: Phase 5 (M1 워커) 또는 Phase 6 (lol-list 이관). O3 (M1 Tailscale 이름) 은 Phase 5 전까지 보류.
+다음 액션: Phase 7 검증 (24h 안정 동작) → Phase 8 모니터링. Phase 5 (M1 워커) 는 맥북 준비 시.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -47,7 +47,7 @@
 - [x] env: Edge API URL (Tailscale 경로), JWT, Fernet (`.env`, repo 외)
 - [x] edge worker → api-server 연결 확인 (5초 polling, 200 OK)
 - [x] Edge Executor UI (`/plugin/edge_executor`) 정상 (2026-05-23)
-- [ ] dummy task 라우팅 확인
+- [x] dummy task 라우팅 확인 — test_environment DAG, ops-vm/worker-vm 각각 정상 (2026-05-23)
 
 ## Phase 5 — M1 워커 (macbook)
 
@@ -61,8 +61,13 @@
 
 `docs/asset-model.md` 의 v1 결정 (전통 `@dag`) 따름.
 
-- [ ] `src/collectors/` 에 옛 도메인 코드 이관
-- [ ] `dags/lol_list_matches.py` / `lol_list_liquipedia.py` / `lol_list_meta.py`
+아키텍처: thin wrapper DAG (airflow-stack, public) + 비즈니스 로직 (lol-list repo, private). PYTHONPATH로 연결.
+
+- [x] DAG 3개 작성: `dags/sync_matches.py` / `sync_liquipedia.py` / `sync_lol_meta.py` (2026-05-23)
+- [x] Airflow Variables IaaC: `airflow-variables.json` → airflow-init 에서 import (2026-05-23)
+- [x] 배포 DAG: `dags/deploy.py` — repo·commit 파라미터로 양쪽 VM git pull (2026-05-23)
+- [x] lol-list 의존성 Dockerfile 추가: postgrest, httpx, bs4, lxml, tenacity (2026-05-23)
+- [x] 엔드투엔드 검증: leagues 4, teams 42, matches 160, liquipedia 14 upserted (2026-05-23)
 - [ ] `docs/spec.md` 에 Supabase 스키마 기록
 - [ ] 스케줄 자동 fire 확인 (10분 / 15분 / 일별 KST 00:00)
 
