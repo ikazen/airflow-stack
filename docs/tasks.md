@@ -49,13 +49,22 @@
 - [x] Edge Executor UI (`/plugin/edge_executor`) 정상 (2026-05-23)
 - [x] dummy task 라우팅 확인 — test_environment DAG, ops-vm/worker-vm 각각 정상 (2026-05-23)
 
-## Phase 5 — M1 워커 (macbook)
+## Phase 5 — M1 워커 (mac-server)
 
-- [ ] uv + Python 3.12, git clone, `uv sync --frozen` (edge3 포함)
-- [ ] 컨테이너 vs 호스트 직접 결정 (Docker Desktop 부담 평가)
-- [ ] `~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist`: `--queues gpu,default --concurrency 8`, KeepAlive, RunAtLoad
-- [ ] `launchctl load`
-- [ ] UI `mac` queue healthy, sleep/wake 자동 복귀 확인
+런타임 결정: **Colima + 컨테이너** (Docker Desktop 라이선스·GUI 부담 회피, 통일성 위해 같은 compose 사용). uv 호스트 직접 안 함.
+
+- [x] Tailscale 가입 + SSH alias `mac` (2026-05-23)
+- [x] Homebrew + `brew install colima docker docker-compose` (2026-05-23)
+- [x] colima 4 CPU / 8 GB VM 시동 (2026-05-23)
+- [x] SSH ed25519 키 생성 + GitHub deploy key (lol-list, read-only) 등록 (2026-05-23)
+- [x] `~/airflow-stack`, `~/lol-list` git clone (2026-05-23)
+- [x] `infra/mac-server/docker-compose.yml` (queue `gpu,default --concurrency 8`, hostname `mac-server`)
+- [x] `.env` 작성 (ops-vm JWT/Fernet 동일값, Tailscale 경로)
+- [x] `docker compose up -d` → DB 에 `mac-server` idle 등록 확인 (2026-05-23)
+- [x] UI Edge Workers 탭 시각 확인 (2026-05-23)
+- [ ] `queue="gpu"` dummy task 라우팅 검증 (test_environment DAG)
+- [ ] LaunchAgent: colima 자동 시동 (mac 재부팅 시 자연 복귀). edge worker 자체는 compose `restart: unless-stopped` 가 처리
+- [ ] sleep/wake 후 worker 자연 복귀 확인 (Phase 7 검증과 합쳐도 됨)
 
 ## Phase 6 — lol-list 이관
 
