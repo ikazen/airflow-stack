@@ -22,7 +22,13 @@ services:
       postgres:
         condition: service_healthy
     env_file: .env
-    command: airflow db migrate
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow variables import /opt/airflow/config/airflow-variables.json
+      "
+    volumes:
+      - ./airflow-variables.json:/opt/airflow/config/airflow-variables.json:ro
     restart: no
 
   api-server:
