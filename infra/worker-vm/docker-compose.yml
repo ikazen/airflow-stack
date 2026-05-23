@@ -6,6 +6,9 @@ services:
     env_file: .env
     network_mode: host
     command: airflow edge worker --queues default --concurrency 4
+    environment:
+      PYTHONPATH: /opt/airflow/lol-list
     volumes:
       - ../../dags:/opt/airflow/dags:ro
+      - /home/ubuntu/lol-list:/opt/airflow/lol-list:ro
     restart: unless-stopped

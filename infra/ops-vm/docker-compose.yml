@@ -85,13 +85,14 @@ services:
         condition: service_completed_successfully
     env_file: .env
     environment:
-      # Docker 내부망으로 직결 — Tailscale 경유 불필요
       AIRFLOW__EDGE__API_URL: http://api-server:8080/edge_worker/v1/rpcapi
+      PYTHONPATH: /opt/airflow/lol-list
     hostname: ops-vm
     command: airflow edge worker --queues ops --concurrency 2
     volumes:
       - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
+      - /home/ubuntu/lol-list:/opt/airflow/lol-list:ro
     restart: unless-stopped
 
   caddy:

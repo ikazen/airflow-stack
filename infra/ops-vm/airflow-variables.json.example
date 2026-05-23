@@ -1,11 +1,4 @@
 {
   "supabase_url": "",
-  "supabase_service_key": "",
-  "lolesports_key": "",
-
-  "repo_airflow_stack_url": "https://github.com/<user>/airflow-stack.git",
-  "repo_airflow_stack_local_path": "/home/ubuntu/airflow-stack",
-
-  "repo_lol_list_url": "https://<github-token>@github.com/<user>/lol-list.git",
-  "repo_lol_list_local_path": "/home/ubuntu/lol-list"
+  "supabase_service_key": ""
 }
