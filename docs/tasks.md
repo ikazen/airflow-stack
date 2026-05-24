@@ -4,7 +4,7 @@
 
 **Phase 6 — lol-list 이관 완료 (2026-05-23). 3개 DAG 엔드투엔드 검증 완료.**
 
-다음 액션: Phase 7 검증 (24h 안정 동작) → Phase 8 모니터링. Phase 5 (M1 워커) 는 맥북 준비 시.
+다음 액션: Phase 9 — 실행 환경 격리 + registry 전환 (L23~L26, 2026-05-24 결정). Phase 7 검증·Phase 8 모니터링은 Phase 9 후로 미룸 (배포·실행 모델이 바뀌므로 검증 기준선이 달라짐).
 
 ## Phase 0 — 옛 자산 정리
 
@@ -95,8 +95,57 @@
 - [ ] Notification + 알람 3종 (CPU>80% 10분 / 인스턴스 not RUNNING / Boot vol >85%)
 - [ ] Budget alert
 
+## Phase 9 — 실행 환경 격리 + registry (2026-05-24 계획)
+
+L23~L26 결정. 운용 환경 (scheduler·worker) ↔ 실행 환경 (task body) 분리, lol-list 패키지화, 자가호스트 registry, sha-pinned image.
+
+해소되는 이슈 (2026-05-24 회고):
+- lol-list transitive deps 가 airflow-stack 이미지에 강제 박힘 → L23·L24
+- 노드별 환경 분기 (gpu/cpu/browser) 표현 수단 부재 → L24 (task image 단위 분기)
+- lol-list = 패키지 아닌 디렉토리 (`from collectors import X` 작동 위해 PYTHONPATH 트릭) → L23
+- bind mount `:ro` + 호스트 `git pull` = 컨테이너 비-self-contained, 버전 추적 불가 → L24·L26
+- worker 프로세스 import 캐시 vs `git pull` 핫스왑 = 새 코드/옛 코드 섞임 비결정 → L24
+- `dags/deploy.py` 의 queue=default 라우팅 비결정 (worker-vm 가 갱신 안 될 수 있음) → L24 가 deploy DAG 자체 폐기 (배포 = registry push 로 이동)
+
+### 인프라 (선행)
+
+- [ ] worker-vm 재생성: 부트 75 → 50 GB, Tailscale 재가입, host-setup 재실행, edge worker compose 재기동
+- [ ] OCI Block Volume 25 GB 생성 (ops-vm 과 같은 AD), ops-vm attach (paravirtualized), `mkfs.ext4` → `/srv/registry` mount, `/etc/fstab` 등록
+- [ ] `infra/ops-vm/docker-compose.yml` 에 `registry:2` 서비스 추가 — `/srv/registry` bind, tailnet IP bind 또는 Caddy 뒤 reverse proxy
+- [ ] registry retention 정책: `keep last 10 tags` + `untagged > 30d` GC cron
+
+### 코드·이미지 (병행)
+
+- [ ] lol-list repo 에 `pyproject.toml` + dep 선언 (httpx / bs4 / lxml / postgrest / tenacity / ...), `pip install` 가능 확인
+- [ ] `infra/task/Dockerfile` (또는 lol-list 안) — 베이스 `python:3.12-slim` + `pip install lol-list@<sha>`. 노드 capability 별 변종 (`task-default`, `task-gpu`) 필요 시
+- [ ] 빌드·push 흐름: 수동 `make` 또는 GitHub Actions → `registry.<tailnet>:5000/lol-list:<sha>` push (선택: GitHub Actions 자동화는 후순위)
+
+### Airflow 전환
+
+- [ ] DAG 전환: `sync_matches` / `sync_liquipedia` / `sync_lol_meta` → `@task.docker(image=..., force_pull=False)` 로 thin wrapper. SUPABASE 자격은 `env_file` 또는 `mounts` 로 주입
+- [ ] DooD: `infra/ops-vm/docker-compose.yml` · `infra/worker-vm/docker-compose.yml` · `infra/mac-server/docker-compose.yml` 워커 서비스에 `/var/run/docker.sock` bind mount 추가
+- [ ] `airflow.Dockerfile` 에서 lol-list 도메인 deps (httpx / bs4 / lxml / postgrest / tenacity) 제거 — task image 가 책임짐
+- [ ] 워커 compose 의 lol-list bind mount 제거 (3 노드), `PYTHONPATH` 제거
+- [ ] `dags/deploy.py` 삭제 (queue 비결정 + 비-immutable 폐기). `dags/cleanup_logs.py` 는 운용 작업이라 PythonOperator 유지
+- [ ] `dags/` 자체는 여전히 dag-processor 가 import — 현재 `:ro` bind mount 유지 (image 굽기는 v2)
+
+### 검증
+
+- [ ] `sync_matches` task 가 `registry.<tailnet>:5000/lol-list:<sha>` 컨테이너에서 실행되어 Supabase upsert 정상
+- [ ] sha-pinned image: 노드별 첫 task pull, 이후 task 캐시 hit (`docker images` 확인)
+- [ ] worker-vm 재생성 후 동일 sha 로 동일 동작
+- [ ] registry 디스크 모니터 — `/srv/registry` 사용량, GC 동작
+
+### 문서 갱신 (작업 진행 중)
+
+- [ ] `architecture.md` — queue 의미 명시, OCI 자원에 block volume / registry 노드, 이미지 2 층 모델 (baseline + task image)
+- [ ] `setup.md` — Phase 4 (worker-vm) 재생성 절차, Phase 9 (registry + task image 빌드·push)
+- [ ] `runbook.md` — image 빌드·push 일상 절차, registry GC, worker-vm 재생성 절차 박제
+
 ## 미래
 
 - v2: derived data 추가 시 `@asset` 도입 (`docs/asset-model.md` 트리거)
-- v2: DAG bundle (remote storage) 검토
+- v2: DAG bundle (remote storage) 검토 — task image 와 별개로 DAG 파일 운반 자동화
 - v2: Triggerer (deferrable 필요 시)
+- v2: GitHub Actions → registry push 자동화 (현재 수동 빌드)
+- v2: `@task.external_python` (venv 매트릭스) — task image 매트릭스가 부담스러워지면 같은 노드 안에서 가벼운 분기 수단
