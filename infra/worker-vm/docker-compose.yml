@@ -11,4 +11,9 @@ services:
     volumes:
       - ../../dags:/opt/airflow/dags:ro
       - /home/ubuntu/lol-list:/opt/airflow/lol-list:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     restart: unless-stopped
