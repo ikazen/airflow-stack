@@ -40,7 +40,7 @@ services:
         condition: service_completed_successfully
     env_file: .env
     ports:
-      - "8080:8080"
+      - "${OPS_TAILNET_IP}:8080:8080"
     command: airflow api-server
     volumes:
       - ../../dags:/opt/airflow/dags:ro

@@ -103,7 +103,7 @@ airflow.<your-domain> {
 
 ### 워커 경로 (L20)
 
-api-server 8080 을 ops-vm 의 Tailscale interface 에 bind. 워커는 `http://<ops-vm-tailnet>:8080/edge_worker/v1` 로 직결. Caddy 는 같은 compose 네트워크로 `api-server:8080` 접근 — 공인 포트 불필요.
+api-server 8080 을 ops-vm 의 Tailscale interface 에만 bind. compose 의 `ports` 를 `${OPS_TAILNET_IP}:8080:8080` 로, ops-vm `.env` 에 `OPS_TAILNET_IP` (tailnet IP) 추가. 워커는 `http://<ops-vm-tailnet>:8080/edge_worker/v1` 로 직결. Caddy 는 같은 compose 네트워크 안에서 `api-server:8080` 으로 접근 (docker 내부 DNS) — 호스트 포트 매핑 무관. NSG + OS bind 두 겹 방어 (NSG 룰 실수 시에도 공인 IP 의 8080 닫힘).
 
 ### 시작
 
