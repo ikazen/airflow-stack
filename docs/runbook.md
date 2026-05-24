@@ -8,6 +8,20 @@ LaunchAgent 정의·설치 절차 → **`nexus-prime:hosts/mac-server/launchd/lo
 
 colima 가 떠 있으면 edge worker 컨테이너는 `restart: unless-stopped` 가 자체 복귀.
 
+## Airflow DB / user 초기화 (최초 1회)
+
+ops-vm 에서 실행. postgres admin 패스워드는 Bitwarden `secrets-backup.md` 참조.
+
+```bash
+ssh ops-vm
+
+docker exec -it postgres psql -U postgres -c "CREATE DATABASE airflow;"
+docker exec -it postgres psql -U postgres -c "CREATE USER airflow WITH PASSWORD '<airflow-db-pw>';"
+docker exec -it postgres psql -U postgres -c "GRANT ALL ON DATABASE airflow TO airflow;"
+```
+
+완료 후 `airflow-init` 이 `db migrate` 로 스키마 생성.
+
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
