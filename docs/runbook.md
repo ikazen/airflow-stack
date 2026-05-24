@@ -22,6 +22,11 @@ docker exec -it postgres psql -U postgres -c "GRANT ALL ON DATABASE airflow TO a
 
 완료 후 `airflow-init` 이 `db migrate` 로 스키마 생성.
 
+PostgreSQL 15+ 는 public 스키마 CREATE 권한이 기본 미포함 — 아래도 실행:
+```bash
+docker exec -it postgres psql -U postgres -d airflow -c "GRANT ALL ON SCHEMA public TO airflow;"
+```
+
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
