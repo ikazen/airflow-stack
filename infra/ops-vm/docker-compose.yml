@@ -31,7 +31,7 @@ services:
     volumes:
       - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
-      - ./simple_auth_manager_passwords.json:/opt/airflow/simple_auth_manager_passwords.json:rw
+      - ./simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated:rw
     logging:
       driver: json-file
       options:

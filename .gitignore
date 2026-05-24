@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 simple_auth_manager_passwords.json
+simple_auth_manager_passwords.json.generated
 airflow-variables.json
 
 # Claude Code 로컬 설정
