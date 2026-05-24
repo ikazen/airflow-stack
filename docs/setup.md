@@ -1,6 +1,6 @@
 # Setup
 
-인스턴스 / 워커 셋업. Phase 1~5 의 실행 절차.
+인스턴스 / 워커 셋업. Phase 1~6 의 실행 절차.
 
 전제: 열린 결정 확정 — O1·O2·O4 완료. O3 (M1 Tailscale 이름) 은 Phase 5 전.
 
@@ -45,7 +45,7 @@ API key 정리. Cloud Guard / Notification / 알람 3종 / Budget 는 Phase 8 (�
 
 ## 호스트 부트스트랩 (Phase 2)
 
-`scripts/host-setup.sh`: swap, Docker Engine + Compose plugin, fail2ban, unattended-upgrades.
+`scripts/host-setup.sh`: swap, Docker Engine + Compose plugin, unattended-upgrades.
 
 Tailscale 3 노드 가입. ACL: SSH tailnet 만, ops-vm 443/80 공인. MagicDNS ON.
 
@@ -53,53 +53,44 @@ Tailscale 3 노드 가입. ACL: SSH tailnet 만, ops-vm 443/80 공인. MagicDNS 
 
 ### 커스텀 이미지 (L19)
 
-공식 `apache/airflow:3.2.1` 에는 edge3 provider 도 도메인 deps 도 없음 → `infra/airflow.Dockerfile` 로 확장:
+공식 `apache/airflow:3.2.1` 에는 edge3 provider 도 도메인 deps 도 없음 → `infra/airflow.Dockerfile` 로 확장.
 
-```
-FROM apache/airflow:3.2.1
-COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
-```
-
-`requirements.txt` = `apache-airflow-providers-edge3` + `apache-airflow-providers-postgres` + 도메인 deps, constraints 핀 (아래 "의존성 핀"). 공식 이미지는 멀티아치 (arm64 포함) — ARM 그대로 빌드.
+`requirements.txt` = `apache-airflow-providers-edge3==3.6.0` + `apache-airflow-providers-postgres` + 도메인 deps, constraints 핀 (아래 "의존성 핀"). 공식 이미지는 멀티아치 (arm64 포함) — ARM 그대로 빌드.
 
 api-server·scheduler·dag-processor·워커 전부 이 이미지 사용.
 
 ### Compose 서비스
 
-- `postgres:16-alpine` — DB `airflow`, Tailscale interface 또는 localhost 만 bind
-- 커스텀 이미지로 `api-server` / `scheduler` / `dag-processor`
+`infra/ops-vm/docker-compose.yml` 참조. 서비스 목록:
+
+- `postgres:16` — DB `airflow`
+- `airflow-init` — `db migrate` + `variables import` (아래 Phase 6 참조). 최초 1회
+- `api-server` — `${OPS_TAILNET_IP}:8080:8080` bind (tailnet only, L20)
+- `scheduler` / `dag-processor`
+- `edge-worker-ops` — `--queues default,ops --concurrency 2`, `PYTHONPATH=/opt/airflow/lol-list`
 - `caddy:2-alpine`
 
 ### 환경변수 핵심
+
+`infra/ops-vm/.env.example` 참조. 핵심:
 
 ```
 AIRFLOW__CORE__EXECUTOR=airflow.providers.edge3.executors.EdgeExecutor
 AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://...
 AIRFLOW__CORE__FERNET_KEY=<repo 외 보관>
-AIRFLOW__CORE__AUTH_MANAGER=airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
-  (Airflow 3 기본값 — 명시 핀)
-AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS=admin:admin
-AIRFLOW__EDGE__JWT_SECRET=<repo 외 보관>
+AIRFLOW__API_AUTH__JWT_SECRET=<repo 외 보관>
+OPS_TAILNET_IP=<oci-ops-tailnet-ip>
 ```
 
 ### DB 초기화 + admin
 
-- 최초 1회 `airflow db migrate` (compose 의 init 서비스 또는 단발 실행). Airflow 3 는 `db init` 대신 `db migrate`
-- admin user 는 `SIMPLE_AUTH_MANAGER_USERS` (`user:role`) 로 정의. 비번은 사용자가 못 고름 — Airflow 가 자동 생성해 `$AIRFLOW_HOME/simple_auth_manager_passwords.json.generated` 에 씀. 거기서 읽어 로그인
+- airflow-init 서비스가 `db migrate` + `variables import` 자동 실행
+- admin user 는 `AIRFLOW__SIMPLE_AUTH_MANAGER__USERS=admin` 으로 정의. 비번은 Airflow 가 자동 생성 → `simple_auth_manager_passwords.json.generated` 에서 읽어 로그인
 - SimpleAuthManager 는 2FA·RBAC 없음. 노출 표면 늘릴 거면 `decisions.md` R3 (FabAuthManager) 재고
 
 ### Caddyfile
 
-```
-airflow.<your-domain> {
-    @edge path /edge_worker/*
-    respond @edge 404
-    reverse_proxy api-server:8080
-}
-```
-
-공개 endpoint 는 사람용 UI 만. 워커는 Caddy 를 안 거침 (아래).
+`infra/ops-vm/Caddyfile` 참조. 보안 헤더 (HSTS·X-Frame-Options·X-Content-Type-Options) + `/edge_worker/v1/*` 차단 + `api-server:8080` reverse proxy.
 
 ### 워커 경로 (L20)
 
@@ -115,47 +106,61 @@ docker compose up -d
 
 ## 안정 워커 (Phase 4, worker-vm)
 
-코드만 git clone, 런타임은 커스텀 이미지:
+```bash
+git clone git@github.com:<your-repo>/airflow-stack.git ~/airflow-stack
+git clone git@github.com:<your-repo>/lol-list.git ~/lol-list  # SSH deploy key 필요
+```
+
+`infra/worker-vm/docker-compose.yml`: `network_mode: host`, `--queues default --concurrency 4`, `PYTHONPATH=/opt/airflow/lol-list`.
+
+env (`infra/worker-vm/.env`): `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1/rpcapi`, JWT, Fernet.
 
 ```
-git clone <new-repo> /opt/airflow-stack
+docker compose up -d
 ```
-
-`infra/worker-vm/docker-compose.yml`: 커스텀 이미지로 `airflow edge worker --queues default --concurrency 4`.
-
-- volume: `/opt/airflow-stack/dags:/opt/airflow/dags:ro`, `/opt/airflow-stack/src:/opt/airflow/src:ro`
-- env: `PYTHONPATH=/opt/airflow/src` (워커가 `collectors` import), `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1`, JWT, Fernet
-
-코드 갱신 = `git pull` + `docker compose restart`. deps 갱신 = 이미지 재빌드.
 
 검증: UI Edge Workers 탭 healthy.
 
-## M1 워커 (Phase 5)
+## M1 워커 (Phase 5, mac-server)
 
-```
-brew install uv
-git clone <new-repo> ~/Code/airflow-stack
-cd ~/Code/airflow-stack && uv sync --frozen
-```
+런타임: Colima + Docker 컨테이너 (`infra/mac-server/docker-compose.yml`).
 
-`uv sync` 가 `apache-airflow` + `apache-airflow-providers-edge3` + 도메인 deps 설치. 컨테이너 vs 호스트 직접은 Docker Desktop on M1 부담 평가 후 결정.
+```bash
+brew install colima docker docker-compose
+colima start --cpu 4 --memory 8 --vm-type vz
 
-### LaunchAgent
-
-`~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist`:
-- Label: `<reverse-domain>.airflow-worker` (본인 도메인 reverse-DNS)
-- WorkingDirectory: `~/Code/airflow-stack`
-- EnvVars: `AIRFLOW__EDGE__API_URL=http://<ops-vm-tailnet>:8080/edge_worker/v1`, JWT, Fernet
-- ProgramArguments: `[<uv 절대경로>, run, airflow, edge, worker, --queues, gpu,default, --concurrency, 8]`
-  (launchd 는 PATH 없음 — `uv` 절대경로 필수. 예: `/opt/homebrew/bin/uv`)
-- KeepAlive / RunAtLoad: true
-- Logs: `~/Library/Logs/airflow-worker-{out,err}.log`
-
-```
-launchctl load ~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist
+git clone git@github.com:<your-repo>/airflow-stack.git ~/airflow-stack
+git clone git@github.com:<your-repo>/lol-list.git ~/lol-list  # SSH deploy key 필요
 ```
 
-검증: UI gpu queue healthy. sleep/wake 자동 복귀.
+env (`infra/mac-server/.env`): JWT, Fernet, `LOL_LIST_PATH=~/lol-list`, `AIRFLOW__EDGE__API_URL`.
+
+```
+cd ~/airflow-stack && docker compose -f infra/mac-server/docker-compose.yml up -d
+```
+
+colima 자동 시동 (재부팅 시): `docs/runbook.md` LaunchAgent 절차 참조.
+
+검증: UI Edge Workers 탭 — mac-server gpu+default queue healthy.
+
+## lol-list 연동 (Phase 6)
+
+### SSH deploy key
+
+ops-vm / worker-vm / mac-server 각각 ed25519 키 생성 + GitHub lol-list repo 에 read-only deploy key 등록:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
+# GitHub → lol-list → Settings → Deploy keys → Add (read only)
+```
+
+### airflow-variables.json
+
+`infra/ops-vm/airflow-variables.json` 은 gitignored. `airflow-variables.json.example` 참고해 ops-vm 에 직접 작성. airflow-init 이 `docker compose up` 시 자동 import.
+
+### DAG 구조
+
+thin wrapper DAG (`dags/`) + 비즈니스 로직 (`~/lol-list`). `PYTHONPATH=/opt/airflow/lol-list` 로 연결. 상세: `docs/asset-model.md`.
 
 ## Secrets
 
@@ -165,13 +170,9 @@ launchctl load ~/Library/LaunchAgents/<reverse-domain>.airflow-worker.plist
 
 ## 의존성 핀
 
-`pyproject.toml`: `apache-airflow==3.2.x`, `apache-airflow-providers-edge3==<핀>`, `apache-airflow-providers-postgres==<핀>`, 도메인 deps.
-
-lock / requirements 생성 시 Airflow constraints 를 반영:
+`requirements.txt` 생성 시 Airflow constraints 반영:
 
 ```
-uv pip compile pyproject.toml -o requirements.txt \
+uv pip compile requirements.in -o requirements.txt \
   -c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt
 ```
-
-생성된 `requirements.txt` 는 커스텀 이미지 빌드에, `uv.lock` (`uv sync --frozen`) 은 M1 호스트 직접 실행에 사용. 둘 다 동일 핀.
