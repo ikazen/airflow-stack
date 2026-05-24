@@ -7,7 +7,7 @@ services:
     command: >
       bash -c "
         airflow db migrate &&
-        airflow variables import /opt/airflow/config/airflow-variables.json
+        { [ -f /opt/airflow/config/airflow-variables.json ] && airflow variables import /opt/airflow/config/airflow-variables.json || true; }
       "
     volumes:
       - ./airflow-variables.json:/opt/airflow/config/airflow-variables.json:ro

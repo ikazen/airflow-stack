@@ -27,6 +27,19 @@ PostgreSQL 15+ 는 public 스키마 CREATE 권한이 기본 미포함 — 아래
 docker exec -it postgres psql -U postgres -d airflow -c "GRANT ALL ON SCHEMA public TO airflow;"
 ```
 
+## airflow-variables.json 생성 (최초 1회 / 재배포 시)
+
+gitignored. ops-vm 에서 직접 생성. 형식:
+
+```json
+{
+  "key1": "value1",
+  "key2": "value2"
+}
+```
+
+실제 값은 Bitwarden `secrets-backup.md` 참조. 파일이 없으면 `airflow-init` 이 `db migrate` 만 실행하고 import 는 건너뜀 (정상 종료).
+
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
