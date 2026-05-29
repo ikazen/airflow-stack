@@ -39,9 +39,13 @@ Phase 9 (계획) 에서 task 실행은 별도 image (`@task.docker`) 로 — `de
 
 ## 인프라 의존 (nexus-prime 제공)
 
-- `nexus` docker network (external) — airflow 서비스가 join
-- `postgres:5432` — 공유 DB 안 `airflow` database
-- `<ops-vm-tailnet>:5000` — task image registry (Phase 9 활용 예정)
+서비스 입장에서 본 결합점·내부 주소·발급 절차는 `nexus-prime:docs/dev-guide.md` 가 정본.
+
+- `nexus` docker network (external) — airflow 서비스가 join (`networks: { nexus: { external: true } }`)
+- `postgres:5432` — 공유 DB 안 `airflow` database (DB/user 발급은 dev-guide)
+- `registry.internal` — task image registry (Phase 9 활용 예정). DNS 미작동 시 fallback `<ops-vm-tailnet>:5000`
 - 워커 → api-server = Tailscale 직결 (cert 불필요, edge API 공인 노출 X)
+
+airflow 는 nexus-prime 의 `compose/_hosts/` include 가 아니라 **별도 repo 의 자체 compose** 로 외부 `nexus` 네트워크에 join — dev-guide 의 "신규 서비스 추가 체크리스트" (nexus-prime 내부 서비스용) 와 구분.
 
 워크로드 모델링과 lol-list 매핑은 `docs/asset-model.md`.

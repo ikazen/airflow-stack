@@ -66,9 +66,10 @@ OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부
 
 ## Phase 8 — 모니터링 (Phase 7 후)
 
-- [ ] Cloud Guard ON
+nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metrics 노출 후 scrape 대상 등록은 nexus-prime 측. Cloud Guard/Budget 은 OCI 레벨 (nexus-prime).
+
+- [ ] airflow metrics 노출 (StatsD exporter → prometheus.internal scrape)
 - [ ] Notification + 알람 3종
-- [ ] Budget alert
 
 ## Phase 9 — 실행 환경 격리 (2026-05-24 계획)
 
@@ -91,7 +92,7 @@ L23~L26. 운용 환경 (scheduler·worker) ↔ 실행 환경 (task body) 분리.
 
 - [ ] lol-list `pyproject.toml` + dep 선언, `pip install` 가능
 - [ ] task image Dockerfile (lol-list 안) — `python:3.12-slim` + `pip install lol-list@<sha>`. capability 분기 (`task-default` / `task-gpu`) 필요 시
-- [ ] 빌드·push — 수동 또는 GitHub Actions → `<ops-vm-tailnet>:5000/lol-list:<sha>`
+- [ ] 빌드·push — 수동 또는 GitHub Actions → `registry.internal/lol-list:<sha>` (push 절차·insecure-registries 설정은 `nexus-prime:docs/dev-guide.md`)
 
 ### Airflow 전환
 

@@ -1,6 +1,6 @@
 # Setup
 
-Airflow workload 셋업. **사전 조건: `nexus-prime` 셋업 완료** (호스트·Tailscale·Caddy·Postgres·Registry 가동 중). 인프라 셋업은 `nexus-prime:docs/setup.md`.
+Airflow workload 셋업. **사전 조건: `nexus-prime` 셋업 완료** (호스트·Tailscale·Caddy·Postgres·Registry 가동 중). 인프라 셋업은 `nexus-prime:docs/setup.md`, 내부 주소·결합점·Postgres DB 발급·registry push 절차는 `nexus-prime:docs/dev-guide.md`.
 
 ## 1. 코드 운반
 

@@ -43,7 +43,7 @@ gitignored. ops-vm 에서 직접 생성. 형식:
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
-- 코드 배포 (Phase 9 후) — DAG 파일은 git pull, task body 는 registry push
+- 코드 배포 (Phase 9 후) — DAG 파일은 git pull, task body 는 `registry.internal` push (push·insecure-registries 절차 = `nexus-prime:docs/dev-guide.md`)
 - 워커 재기동 (worker-vm container restart / mac-server `launchctl unload+load` 또는 `docker compose restart`)
 - Secrets 회전 (Fernet / JWT — Postgres pw 는 nexus-prime)
 - 인스턴스 / 메타 손실 시 재배포 복구 (백업 없음 — nexus-prime L7)
