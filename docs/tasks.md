@@ -89,7 +89,7 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 
 - `sync_matches` (`*/10`) / `sync_secondary` (`*/15`) — active-window 휴리스틱으로 평시 빈 폴링 스킵
 - `daily_meta` (`0 0 * * *` KST) — leagues >> [matches, secondary](force) >> report. report 가 xcom 수합해 한 줄 요약 (downstream report 패턴)
-- 공통 docker 설정은 `dags/data_sync_common.py` (이미지·env·DooD). 비즈니스 로직은 private 이미지(facade) 안, DAG 표면엔 generic 이름만
+- 실행 설정(env/소켓/queue)은 각 DAG 파일에 인라인 — drift 가 곧 장애인 이미지 태그만 `dags/data_sync_common.py` 의 `IMAGE` 로 공유. 비즈니스 로직은 private 이미지(facade) 안, DAG 표면엔 generic 이름만
 
 진행:
 
