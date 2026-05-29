@@ -17,7 +17,13 @@
 
 ### DAG Versioning
 - 2.x: 현재 DAG 파일 = 단일 진실. 과거 run 코드 추적 어려움
-- 3.x: DagRun 별 버전 박제. UI 에서 "어느 코드로 돈 run" 확인
+- 3.x: DagRun 별 버전 박제. UI 에서 "어느 코드로 돈 run" 확인 — DAG Bundle 위에서 동작 (commit pin)
+
+### DAG Bundle (DAG 분배)
+- 2.x: DAG 폴더 = 모든 컴포넌트가 같은 파일시스템 봐야 함. self-host 면 호스트마다 git pull / NFS / rsync 수동 분배
+- 3.x: **bundle** 이 분배 추상화. `LocalDagBundle` (폴더) 또는 `GitDagBundle` (repo 직접 fetch). dag-processor 가 파싱, **워커도 task 실행 시 bundle 에서 materialize** — 워커가 DAG 코드 가져야 한다는 사실은 불변 (executor 종류 무관), bundle 은 그 분배를 자동화
+- managed (MWAA/Composer) 의 "버킷에 올리면 끝" = 플랫폼이 깐 bundle/분배 계층. self-host 에선 GitDagBundle 이 그 역할 (`decisions.md` L27)
+- `GitDagBundle` public repo: `repo_url` 직접 전달, `git_conn_id` 생략 (0.2.3+ public 지원). config = `[dag_processor] dag_bundle_config_list` JSON
 
 ### DAG Processor 분리 (L15)
 - 2.x: scheduler 안 DAG bag → 파싱 오류가 scheduler 영향

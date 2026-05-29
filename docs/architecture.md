@@ -31,9 +31,18 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 
 scheduler 와 다른 컨테이너로 격리. 파싱 오류가 scheduler 에 영향 안 줌. Airflow 3 권장.
 
+## DAG 분배 = GitDagBundle (L27)
+
+DAG 파일은 호스트 bind mount 가 아니라 **Airflow 가 repo 에서 직접 fetch**. dag-processor (파싱) 와 워커 (실행 시 materialize) 가 각자 `apache-airflow-providers-git` 의 `GitDagBundle` 로 `dags/` 를 당겨옴. public repo 라 `repo_url` 직접 — connection 없음.
+
+- 배포 = repo 에 `git push`. 각 컴포넌트가 `refresh_interval` (60s) 마다 자동 갱신 — 호스트 per-node `git pull` 불필요
+- DagRun 마다 commit pin → DAG Versioning UI
+- 설정: `AIRFLOW__DAG_PROCESSOR__DAG_BUNDLE_CONFIG_LIST` (3 호스트 `.env` 동일)
+- 단, compose / Dockerfile / `.env` 변경은 bundle 밖 — 여전히 호스트 `git pull` + 재배포 필요
+
 ## 이미지 (L19)
 
-api-server·scheduler·dag-processor·워커 모두 공식 `apache/airflow:3.2.x` 확장 커스텀 이미지 — edge3 provider 가 공식 이미지엔 없음. 빌드는 `docs/setup.md`.
+api-server·scheduler·dag-processor·워커 모두 공식 `apache/airflow:3.2.x` 확장 커스텀 이미지 — 공식 이미지엔 없는 edge3 + git provider (GitDagBundle 용) 포함. 빌드는 `docs/setup.md`.
 
 워크로드 task 실행은 `@task.docker` 별도 image (표준) — 도메인 deps 는 거기로, airflow 이미지는 thin. `decisions.md` L24/L26.
 

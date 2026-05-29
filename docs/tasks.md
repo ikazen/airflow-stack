@@ -6,9 +6,12 @@
 
 **lol-list 워크로드 + `deploy.py` 제거 (2026-05-30)** — lol DAG 3종·전용 인프라(bind mount/PYTHONPATH/도메인 deps/변수) 및 git-clone 기반 `deploy.py`·Variables import 메커니즘 일체 제거. 현재 운영 DAG (`cleanup_logs`/`test_environment`) 만 가동.
 
-**방향 확정: 워크로드 task 의 기본 = `@task.docker`** (라이브러리·숨길 로직은 task 이미지로, `decisions.md` L24/L26). airflow 이미지는 thin (edge3 만).
+**방향 확정 (`decisions.md`):**
+- 워크로드 task 의 기본 = `@task.docker` (라이브러리·숨길 로직은 task 이미지로, L24/L26)
+- DAG 배포 = GitDagBundle — Airflow 가 repo 에서 `dags/` 직접 fetch, `git push` 가 곧 배포 (L27)
+- airflow 이미지는 thin (edge3 + git provider)
 
-다음 액션: 차기 도메인 워크로드 미정. DAG 파일 운반 방법은 열린 결정 (`decisions.md` R2).
+다음 액션: GitDagBundle 실배포 검증 (Phase 3.1) 후 차기 도메인 워크로드 (미정).
 
 ## Phase 0 — 옛 자산 정리
 
@@ -52,11 +55,23 @@ OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부
 
 ~~lol-list ETL 3종 이관·엔드투엔드 검증 완료 (2026-05-23).~~ 워크로드 제거로 무효.
 
+## GitDagBundle 전환 (L27, 2026-05-30)
+
+코드 변경 완료, 실배포 검증 남음:
+
+- [x] `airflow.Dockerfile`: `apache-airflow-providers-git==0.3.1` 추가
+- [x] 3 호스트 compose: `dags/` bind mount 제거
+- [x] 3 호스트 `.env.example`: `AIRFLOW__DAG_PROCESSOR__DAG_BUNDLE_CONFIG_LIST` (public repo, `repo_url` 직접)
+- [ ] 실 `.env` 에 `repo_url` 채우고 `docker compose up -d --build` (3 호스트)
+- [ ] dag-processor 가 git 에서 `cleanup_logs`/`test_environment` fetch·파싱 확인
+- [ ] 워커가 task 실행 시 bundle materialize 확인 (`test_environment` 3 큐)
+- [ ] `git push` → 60s 내 DAG 갱신 반영 확인
+
 ## Phase 7 — 플랫폼 검증
 
 워크로드와 무관한 플랫폼 안정성 (운영 DAG / `test_environment` 로 확인 가능):
 
-- [ ] DAG Versioning UI 확인
+- [ ] DAG Versioning UI 확인 (GitDagBundle commit pin, L27)
 - [ ] M1 power-cycle 시 gpu queue 자연 복귀
 - [ ] M1 sleep 중 in-flight task zombie 처리 후 retry
 
@@ -80,6 +95,5 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 ## 미래
 
 - v2: `@asset` (lineage 가 운영 핵심인 워크로드 등장 시)
-- v2: DAG bundle (remote storage)
 - v2: Triggerer (deferrable 필요 시)
 - v2: GitHub Actions → registry push 자동화

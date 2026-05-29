@@ -40,9 +40,10 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 2층 모델 (`decisions.md` L24/L26):
 
 - **task body 로직 + 라이브러리 + 숨길 로직** = `@task.docker` 이미지 (sha-pinned, `registry.internal`). 워크로드 의존성은 여기로. 컨트롤 플레인/워커 이미지엔 도메인 deps 안 박음
-- **DAG 파일** (`dags/`) = dag-processor 에 bind mount 로 운반. 운반 방법 (git pull 등) 미정
+- **DAG 파일** (`dags/`) = GitDagBundle 로 Airflow 가 repo 에서 직접 fetch (L27). `git push` 가 곧 배포, 호스트 per-node pull 불필요
 
-컨트롤 플레인·워커 런타임 = thin 커스텀 이미지 (`apache/airflow:3.2.x` + edge3 만).
+컨트롤 플레인·워커 런타임 = thin 커스텀 이미지 (`apache/airflow:3.2.x` + edge3 + git provider).
+인프라 변경 (compose/Dockerfile/.env) 은 bundle 밖 → 호스트 `git pull` + 재배포.
 
 ## 의존성
 

@@ -4,7 +4,7 @@
 
 배치: OCI ARM 2대 (ops-vm 컨트롤 플레인 + worker-vm 안정 워커) + M1 (mac-server burst 워커). Edge Executor 기반.
 
-현재 도메인 워크로드 없음 — 운영 DAG (`cleanup_logs` / `test_environment`) 만 가동. 워크로드 task 의 기본은 `@task.docker` (라이브러리·숨길 로직은 task 이미지로 — `CLAUDE.md` 코드 배포).
+현재 도메인 워크로드 없음 — 운영 DAG (`cleanup_logs` / `test_environment`) 만 가동. DAG 배포는 GitDagBundle (`git push` → Airflow 가 repo 에서 fetch), task 로직은 `@task.docker` 이미지 (`CLAUDE.md` 코드 배포).
 
 ## 공개 repo 정책
 

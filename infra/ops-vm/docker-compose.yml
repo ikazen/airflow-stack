@@ -23,7 +23,6 @@ services:
       - "${OPS_TAILNET_IP}:8080:8080"
     command: airflow api-server
     volumes:
-      - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
     logging:
       driver: json-file
@@ -44,7 +43,6 @@ services:
     env_file: .env
     command: airflow scheduler
     volumes:
-      - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
     logging:
       driver: json-file
@@ -65,7 +63,6 @@ services:
     env_file: .env
     command: airflow dag-processor
     volumes:
-      - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
     logging:
       driver: json-file
@@ -89,7 +86,6 @@ services:
     hostname: ops-vm
     command: airflow edge worker --queues ops --concurrency 2
     volumes:
-      - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
     logging:
       driver: json-file

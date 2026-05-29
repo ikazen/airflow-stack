@@ -29,10 +29,17 @@ docker exec -it postgres psql -U postgres -d airflow -c "GRANT ALL ON SCHEMA pub
 
 Airflow Variables / Connections 는 미사용 — task 자격증명은 워커 `.env` → `@task.docker` 컨테이너 env 주입. 메타 DB 에 코드 아닌 상태 없음 (disposable, `decisions.md` L10).
 
+## 코드 배포
+
+| 무엇을 바꿨나 | 배포 |
+|---|---|
+| **DAG 파일** (`dags/`) | repo 에 `git push` → GitDagBundle 이 `refresh_interval` (60s) 마다 자동 fetch. 호스트 작업 0 |
+| **task body 로직·라이브러리** | `@task.docker` 이미지 빌드 → `registry.internal` push (절차·insecure-registries = `nexus-prime:docs/dev-guide.md`). DAG 의 image 태그를 새 sha 로 갱신 후 push |
+| **인프라** (compose / Dockerfile / `.env`) | 해당 호스트 `git pull` + `docker compose up -d --build`. Dockerfile (provider 핀 등) 변경은 `--build` 필수 |
+
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
-- 코드 배포 — DAG 파일 운반 (미정), task body 는 `@task.docker` 이미지 `registry.internal` push (push·insecure-registries 절차 = `nexus-prime:docs/dev-guide.md`)
 - 워커 재기동 (worker-vm container restart / mac-server `launchctl unload+load` 또는 `docker compose restart`)
 - Secrets 회전 (Fernet / JWT — Postgres pw 는 nexus-prime)
 - 인스턴스 / 메타 손실 시 재배포 복구 (백업 없음 — nexus-prime L7)

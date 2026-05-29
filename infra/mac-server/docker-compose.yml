@@ -6,8 +6,6 @@ services:
     env_file: .env
     hostname: mac-server
     command: airflow edge worker --queues gpu,default --concurrency 8
-    volumes:
-      - ../../dags:/opt/airflow/dags:ro
     logging:
       driver: json-file
       options:
