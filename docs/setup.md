@@ -8,7 +8,7 @@ Airflow workload 셋업. **사전 조건: `nexus-prime` 셋업 완료** (호스�
 
 ```
 ssh <host>
-git clone https://github.com/<your-repo>/airflow-stack.git ~/airflow-stack
+mkdir -p ~/projects && git clone https://github.com/<your-repo>/airflow-stack.git ~/projects/airflow-stack
 ```
 
 **DAG 파일은 호스트 체크아웃과 무관** — Airflow 가 GitDagBundle 로 repo 에서 직접 fetch (L27). task body 도메인 코드·라이브러리는 `@task.docker` image (`registry.internal`, L24). 호스트 clone 은 인프라(compose/Dockerfile/.env) 운반·이미지 빌드용일 뿐.
@@ -17,7 +17,7 @@ git clone https://github.com/<your-repo>/airflow-stack.git ~/airflow-stack
 
 ```
 ssh ops-vm
-cd ~/airflow-stack
+cd ~/projects/airflow-stack
 cp infra/ops-vm/.env.example infra/ops-vm/.env
 $EDITOR infra/ops-vm/.env   # Fernet / JWT / Postgres conn / Edge API URL / OPS_TAILNET_IP / DAG bundle repo_url
 
@@ -34,7 +34,7 @@ docker compose -f infra/ops-vm/docker-compose.yml up -d
 
 ```
 ssh worker-vm
-cd ~/airflow-stack
+cd ~/projects/airflow-stack
 cp infra/worker-vm/.env.example infra/worker-vm/.env
 $EDITOR infra/worker-vm/.env   # JWT, Fernet, Edge API URL (Tailscale 경로), DAG bundle repo_url
 
@@ -47,7 +47,7 @@ docker compose -f infra/worker-vm/docker-compose.yml up -d
 
 ```
 ssh mac-server
-cd ~/airflow-stack
+cd ~/projects/airflow-stack
 cp infra/mac-server/.env.example infra/mac-server/.env
 $EDITOR infra/mac-server/.env   # JWT, Fernet, Edge API URL, DAG bundle repo_url
 

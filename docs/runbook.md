@@ -35,11 +35,27 @@ Airflow Variables / Connections 는 미사용 — task 자격증명은 워커 `.
 |---|---|
 | **DAG 파일** (`dags/`) | repo 에 `git push` → GitDagBundle 이 `refresh_interval` (60s) 마다 자동 fetch. 호스트 작업 0 |
 | **task body 로직·라이브러리** | `@task.docker` 이미지 빌드 → `registry.internal` push (절차·insecure-registries = `nexus-prime:docs/dev-guide.md`). DAG 의 image 태그를 새 sha 로 갱신 후 push |
-| **인프라** (compose / Dockerfile / `.env`) | 해당 호스트 `git pull` + `docker compose up -d --build`. Dockerfile (provider 핀 등) 변경은 `--build` 필수 |
+| **인프라** (compose / Dockerfile / `.env`) | 해당 호스트 `cd ~/projects/airflow-stack && git pull` + `docker compose -f infra/<host>/docker-compose.yml up -d --build`. Dockerfile (provider 핀 등) 변경은 `--build` 필수 |
+
+호스트 배포 경로 = `~/projects/airflow-stack` (mac 은 `/Users/.../projects/...`). SSH = tailnet alias `ops-vm`/`worker-vm`/`mac-server`.
+
+## 워커 재기동 / recreate
+
+config 만 바뀌어 워커를 recreate 하면 (`.env` 변경 후 `up -d`), **빠른 recreate 시 이름 충돌**이 난다: 옛 등록이 api-server 에 아직 active → `A worker with the name '<host>' is already active` crash-loop. 해소:
+
+```bash
+# 각 호스트: crash-loop 정지
+docker compose -f infra/<host>/docker-compose.yml stop <edge-worker-service>
+# ops-vm dag-processor 컨테이너에서: stale 등록 삭제 (건드린 워커만)
+airflow edge remove-remote-edge-worker -H <hostname>
+# 각 호스트: 재시작
+docker compose -f infra/<host>/docker-compose.yml start <edge-worker-service>
+```
+
+정상 신호 = 로그 `No new job to process`. 확인 = `airflow edge list-workers` (전 워커 idle). 안 건드린 워커의 등록은 삭제 금지 (그 워커도 충돌남).
 
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
-- 워커 재기동 (worker-vm container restart / mac-server `launchctl unload+load` 또는 `docker compose restart`)
 - Secrets 회전 (Fernet / JWT — Postgres pw 는 nexus-prime)
 - 인스턴스 / 메타 손실 시 재배포 복구 (백업 없음 — nexus-prime L7)
