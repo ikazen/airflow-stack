@@ -6,7 +6,7 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 
 | 호스트 | airflow 서비스 |
 |---|---|
-| ops-vm | api-server / scheduler / dag-processor / edge-worker-ops (`default,ops` queue) |
+| ops-vm | api-server / scheduler / dag-processor / edge-worker-ops (`ops` queue 전용) |
 | worker-vm | edge-worker (`default` queue) |
 | mac-server | edge-worker (`gpu,default` queue) |
 
@@ -23,8 +23,8 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 
 | queue | 구독 worker | 라우팅 |
 |---|---|---|
-| `default` | worker-vm · ops-vm · mac-server | 미지정 task 의 기본 |
-| `ops` | ops-vm | control-plane 작업 |
+| `default` | worker-vm · mac-server | 미지정 task 의 기본 |
+| `ops` | ops-vm | control-plane 작업 전용 (ops-vm 은 `default` 미구독 — 컨트롤 플레인 자원 보호) |
 | `gpu` | mac-server | `queue="gpu"` 명시. GPU / Neural Engine 활용. M1 가용성 가정 금지 |
 
 ## DAG processor 분리 (L15)
