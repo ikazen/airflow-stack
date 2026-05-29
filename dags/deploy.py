@@ -42,7 +42,7 @@ def _git_deploy(repo: str, commit: str) -> None:
         "repo": Param(
             "airflow-stack",
             type="string",
-            description="배포할 repo 이름 (예: airflow-stack, lol-list)",
+            description="배포할 repo 이름 (예: airflow-stack)",
         ),
         "commit": Param(
             "",

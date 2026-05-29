@@ -9,10 +9,9 @@ Airflow workload 셋업. **사전 조건: `nexus-prime` 셋업 완료** (호스�
 ```
 ssh <host>
 git clone git@github.com:<your-repo>/airflow-stack.git ~/airflow-stack
-git clone git@github.com:<your-repo>/lol-list.git ~/lol-list   # SSH deploy key 필요
 ```
 
-(Phase 9 의 lol-list 패키지화 후엔 task image 가 lol-list 직접 import — 호스트 clone 불필요. 현재 v1 은 PYTHONPATH bind mount 라 호스트에 clone 필요.)
+DAG 파일은 `dags/` bind mount 로 운반. task body 도메인 코드는 Phase 9 에서 registry image 로 분리 예정.
 
 ## 2. ops-vm — control plane
 
@@ -21,8 +20,6 @@ ssh ops-vm
 cd ~/airflow-stack
 cp infra/ops-vm/.env.example infra/ops-vm/.env
 $EDITOR infra/ops-vm/.env   # Fernet / JWT / Postgres conn / Edge API URL / OPS_TAILNET_IP
-cp infra/ops-vm/airflow-variables.json.example infra/ops-vm/airflow-variables.json
-$EDITOR infra/ops-vm/airflow-variables.json   # supabase_url / supabase_service_key
 
 docker compose -f infra/ops-vm/docker-compose.yml up -d
 ```
@@ -52,16 +49,12 @@ docker compose -f infra/worker-vm/docker-compose.yml up -d
 ssh mac-server
 cd ~/airflow-stack
 cp infra/mac-server/.env.example infra/mac-server/.env
-$EDITOR infra/mac-server/.env   # JWT, Fernet, LOL_LIST_PATH, Edge API URL
+$EDITOR infra/mac-server/.env   # JWT, Fernet, Edge API URL
 
 docker compose -f infra/mac-server/docker-compose.yml up -d
 ```
 
 검증: UI Edge Workers 탭 — `mac-server` healthy, `gpu` queue dummy task 라우팅 정상.
-
-## 5. lol-list 변수 (Phase 6)
-
-`infra/ops-vm/airflow-variables.json` 의 `supabase_url`, `supabase_service_key` — airflow-init 의 `variables import` 가 자동 적용.
 
 ## Secrets
 

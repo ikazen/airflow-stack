@@ -4,7 +4,7 @@
 
 배치: OCI ARM 2대 (ops-vm 컨트롤 플레인 + worker-vm 안정 워커) + M1 (mac-server burst 워커). Edge Executor 기반.
 
-첫 워크로드: lol-list ETL 3종 (matches / liquipedia 보강 / 일별 강제 재실행).
+현재 도메인 워크로드 없음 — 운영 DAG (`deploy` / `cleanup_logs` / `test_environment`) 만 가동.
 
 ## 공개 repo 정책
 
@@ -20,13 +20,12 @@ docs/                  설계 / 결정 / 운영 문서
   setup.md             셋업 절차
   runbook.md           정상 운영 절차
   troubleshooting.md   문제 진단·해결 사례
-  asset-model.md       워크로드 모델링 가이드
   airflow3-learnings.md  3.x 신기능 학습 노트
 infra/                 호스트별 compose + airflow.Dockerfile + .env.example
   ops-vm/              컨트롤 플레인 (api-server/scheduler/dag-processor/edge-worker-ops)
   worker-vm/           안정 워커
   mac-server/          M1 burst 워커
-dags/                  DAG entry (sync_matches / sync_liquipedia / sync_lol_meta 등)
+dags/                  DAG entry (deploy / cleanup_logs / test_environment)
 ```
 
 ## 진입점
@@ -37,4 +36,4 @@ dags/                  DAG entry (sync_matches / sync_liquipedia / sync_lol_meta
 
 ## 현재 상태
 
-Phase 6 완료 — lol-list ETL 3종 엔드투엔드 검증. 인프라 layer 는 `nexus-prime` 으로 분리 완료. 다음: Phase 9 (실행 환경 격리 — `@task.docker` + lol-list 패키지화). 세부는 `docs/tasks.md`.
+플랫폼 가동 중 (컨트롤 플레인 + 3 워커, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. lol-list 워크로드는 제거 (2026-05-30) — 다음 도메인 워크로드 미정. 세부는 `docs/tasks.md`.

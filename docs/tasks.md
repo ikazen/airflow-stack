@@ -2,11 +2,11 @@
 
 ## 현재 상태
 
-**Phase 6 — lol-list 이관 완료 (2026-05-23). 3개 DAG 엔드투엔드 검증 완료.**
+**플랫폼 가동 — 컨트롤 플레인 (ops-vm) + 워커 2 (worker-vm, mac-server), Edge Executor.** 인프라 layer 는 `nexus-prime` 으로 분리 완료.
 
-진행 중: **인프라 layer 분리** (2026-05-24 ~) — airflow-stack 에서 인프라 부분이 `nexus-prime` repo 로. 현재 repo 는 airflow workload 만. 코드 변경만, 현 환경 무영향.
+**lol-list 워크로드 제거 (2026-05-30)** — DAG 3종 + 전용 인프라 (compose bind mount/PYTHONPATH, Dockerfile 도메인 deps, supabase 변수) 일체 제거. 현재 도메인 워크로드 없음, 운영 DAG (`deploy`/`cleanup_logs`/`test_environment`) 만 가동.
 
-다음 액션: Phase 9 — 실행 환경 격리 (`@task.docker` + lol-list 패키지화). Phase 7 검증 / Phase 8 모니터링은 Phase 9 후로 미룸.
+다음 액션: 차기 도메인 워크로드 미정. 워크로드 등장 시 실행 환경 격리 패턴 (dormant `decisions.md` L24/L26) 재검토.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -46,20 +46,14 @@ OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부
 - [x] `queue="gpu"` 라우팅 검증 (2026-05-24)
 - [ ] sleep/wake 후 worker 자연 복귀 (Phase 7 과 합쳐도 됨)
 
-## Phase 6 — lol-list 이관
+## Phase 6 — lol-list 이관 (제거됨 2026-05-30)
 
-- [x] DAG 3개: `sync_matches` / `sync_liquipedia` / `sync_lol_meta` (2026-05-23)
-- [x] Airflow Variables IaaC (airflow-init 의 import)
-- [x] 배포 DAG `dags/deploy.py` (2026-05-23) — Phase 9 에서 폐기 예정
-- [x] lol-list deps Dockerfile 추가 — Phase 9 에서 task image 로 이전
-- [x] 엔드투엔드 검증 (2026-05-23)
-- [ ] `docs/spec.md` 에 Supabase 스키마
-- [ ] 스케줄 자동 fire 확인 (10분 / 15분 / 일별 KST 00:00)
+~~lol-list ETL 3종 이관·엔드투엔드 검증 완료 (2026-05-23).~~ 워크로드 제거로 무효. 배포 DAG `dags/deploy.py` 는 lol 무관 운영 DAG 라 유지.
 
-## Phase 7 — 검증
+## Phase 7 — 플랫폼 검증
 
-- [ ] 첫 자동 run 성공
-- [ ] 24시간 안정 동작
+워크로드와 무관한 플랫폼 안정성 (운영 DAG / `test_environment` 로 확인 가능):
+
 - [ ] DAG Versioning UI 확인
 - [ ] M1 power-cycle 시 gpu queue 자연 복귀
 - [ ] M1 sleep 중 in-flight task zombie 처리 후 retry
@@ -71,54 +65,13 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 - [ ] airflow metrics 노출 (StatsD exporter → prometheus.internal scrape)
 - [ ] Notification + 알람 3종
 
-## Phase 9 — 실행 환경 격리 (2026-05-24 계획)
+## 실행 환경 격리 — dormant (lol-list 제거로 보류)
 
-L23~L26. 운용 환경 (scheduler·worker) ↔ 실행 환경 (task body) 분리.
-
-해소되는 이슈:
-- lol-list transitive deps 가 airflow-stack 이미지에 강제 박힘 → L23·L24
-- 노드별 환경 분기 부재 → L24
-- lol-list 패키지 아님 → L23
-- bind mount + `git pull` = 비-self-contained → L24·L26
-- import 캐시 vs 핫스왑 비결정 → L24
-- `deploy.py` queue 라우팅 비결정 → L24 폐기
-
-### 인프라 선행 (nexus-prime 에서)
-
-- [ ] worker-vm 재생성 (75 → 50 GB), ops-vm 부트 확장 (125 → 150) — `nexus-prime:tofu` apply
-- [ ] `nexus-prime:compose/registry/` 가동 (이미 구성 완료, 실 배포 미진행)
-
-### 코드·이미지
-
-- [ ] lol-list `pyproject.toml` + dep 선언, `pip install` 가능
-- [ ] task image Dockerfile (lol-list 안) — `python:3.12-slim` + `pip install lol-list@<sha>`. capability 분기 (`task-default` / `task-gpu`) 필요 시
-- [ ] 빌드·push — 수동 또는 GitHub Actions → `registry.internal/lol-list:<sha>` (push 절차·insecure-registries 설정은 `nexus-prime:docs/dev-guide.md`)
-
-### Airflow 전환
-
-- [ ] DAG: `sync_*` → `@task.docker(image=..., force_pull=False)`. SUPABASE 자격 env 주입
-- [ ] DooD: 3 노드 워커 compose 에 `/var/run/docker.sock` bind mount
-- [ ] `airflow.Dockerfile` 에서 lol-list 도메인 deps 제거
-- [ ] 워커 compose 의 lol-list bind mount + `PYTHONPATH` 제거 (3 노드)
-- [ ] `dags/deploy.py` 삭제. `dags/cleanup_logs.py` 는 PythonOperator 유지
-- [ ] `dags/` 자체는 dag-processor `:ro` bind mount 유지 (image 굽기는 v2)
-
-### 검증
-
-- [ ] `sync_matches` task 가 registry 컨테이너에서 실행 + Supabase upsert 정상
-- [ ] sha-pinned image: 노드별 첫 task pull, 이후 캐시 hit
-- [ ] worker-vm 재생성 후 동일 sha 동일 동작
-
-### 문서 갱신 (진행 중)
-
-- [ ] `architecture.md` — Phase 9 후 task image 2 층 모델
-- [ ] `setup.md` — task image 빌드·push 절차
-- [ ] `runbook.md` — image 빌드·push 일상 절차, worker-vm 재생성은 nexus-prime 측
+운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리 (`@task.docker` + sha-pinned registry image, `decisions.md` L24/L26). lol-list 의 deps 결합·노드 환경 매트릭스 문제 해소가 동기였으나 워크로드 제거로 보류. 차기 컨테이너 도메인 워크로드 등장 시 재활성 — registry 는 `registry.internal` (`nexus-prime:docs/dev-guide.md`).
 
 ## 미래
 
-- v2: `@asset` (derived data 등장 시)
+- v2: `@asset` (lineage 가 운영 핵심인 워크로드 등장 시)
 - v2: DAG bundle (remote storage)
 - v2: Triggerer (deferrable 필요 시)
 - v2: GitHub Actions → registry push 자동화
-- v2: `@task.external_python` (task image 매트릭스 부담 시)

@@ -92,13 +92,11 @@ services:
     env_file: .env
     environment:
       AIRFLOW__EDGE__API_URL: http://api-server:8080/edge_worker/v1/rpcapi
-      PYTHONPATH: /opt/airflow/lol-list
     hostname: ops-vm
     command: airflow edge worker --queues ops --concurrency 2
     volumes:
       - ../../dags:/opt/airflow/dags:ro
       - airflow-logs:/opt/airflow/logs
-      - /home/ubuntu/lol-list:/opt/airflow/lol-list:ro
     logging:
       driver: json-file
       options:

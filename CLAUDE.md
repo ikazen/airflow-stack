@@ -16,7 +16,7 @@ Airflow 3.2.x self-host. Claude 세션 컨벤션. 사용자 글로벌 `~/.claude
 
 전통 `@dag` 와 Data Asset (`@asset`) 둘 다 자유롭게. 신호로 판단:
 
-- **전통 DAG**: 시간 cron 본질, 단일 잡, dependency 적은 ETL (lol-list 가 여기)
+- **전통 DAG**: 시간 cron 본질, 단일 잡, dependency 적은 ETL
 - **Data Asset**: 여러 데이터의 lineage 가 운영 직관, downstream 이 dep 으로 굴러감
 - **외부 polling / async sensor**: 전통 `@dag` + triggerer
 

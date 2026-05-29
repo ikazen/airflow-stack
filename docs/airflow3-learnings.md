@@ -25,8 +25,14 @@
 
 ### Data Assets
 - 2.x: Dataset (2.4+) 의 진화형
-- 3.x: `@asset` 으로 fully realized. lol-list v1 에선 미사용 (도그마 빼고 best practice 따름 — `docs/asset-model.md`)
+- 3.x: `@asset` 으로 fully realized. 전통 `@dag` 와 선택 기준은 CLAUDE.md "워크로드 모델링" 섹션 (도그마 없음)
 - Dagster SDA 와 비교: paradigm 깊이는 Dagster 가 정제, Airflow 는 bolted-on
+
+### `@dag` 작성 gotcha
+- `@dag` 함수는 모듈 끝에서 호출(`my_dag()`)해야 dag-processor 가 발견
+- cron 은 `start_date` 의 timezone 에서 해석 — KST 의도면 tz-aware `start_date` (또는 `CronTriggerTimetable(timezone=...)`). `@dag` 에 timezone 인자 없음
+- `from <pkg> import ...` 는 `@task` 콜러블 안에서 (파싱 시점 실행 안 됨, 워커 실행 시점에만 import) → dag-processor 는 도메인 deps 불필요
+- 외부 호출 task 는 `retries` 필수 (transient 대비). 특히 `queue="gpu"` 는 M1 intermittent → retry 없으면 sleep 중 실패
 
 ### Auth Manager
 - 2.x: FAB RBAC 가 사실상 기본

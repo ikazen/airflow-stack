@@ -48,4 +48,4 @@ Phase 9 (계획) 에서 task 실행은 별도 image (`@task.docker`) 로 — `de
 
 airflow 는 nexus-prime 의 `compose/_hosts/` include 가 아니라 **별도 repo 의 자체 compose** 로 외부 `nexus` 네트워크에 join — dev-guide 의 "신규 서비스 추가 체크리스트" (nexus-prime 내부 서비스용) 와 구분.
 
-워크로드 모델링과 lol-list 매핑은 `docs/asset-model.md`.
+전통 `@dag` / `@asset` 선택 기준은 CLAUDE.md "워크로드 모델링" 섹션.
