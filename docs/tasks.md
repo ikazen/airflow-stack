@@ -11,7 +11,9 @@
 - DAG 배포 = GitDagBundle — Airflow 가 repo 에서 `dags/` 직접 fetch, `git push` 가 곧 배포 (L27)
 - airflow 이미지는 thin (edge3 + git provider)
 
-다음 액션: GitDagBundle 실배포 검증 (Phase 3.1) 후 차기 도메인 워크로드 (미정).
+**첫 도메인 워크로드 = lck.pics 데이터 동기화 DAG 3종 추가 (2026-05-30)** — `@task.docker` 표준 첫 적용. 워커 docker 활성화(provider + 소켓 mount + Variables) 후 가동. 상세는 아래 "첫 도메인 워크로드".
+
+다음 액션: 워커 docker 활성화 → mac cron 병행 검증.
 
 ## Phase 0 — 옛 자산 정리
 
@@ -81,14 +83,23 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 - [ ] airflow metrics 노출 (StatsD exporter → prometheus.internal scrape)
 - [ ] Notification + 알람 3종
 
-## 실행 환경 격리 — `@task.docker` (표준)
+## 첫 도메인 워크로드 — lck.pics 데이터 동기화 (2026-05-30)
 
-운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리 = 모든 워크로드의 기본 (`decisions.md` L24/L26). 첫 도메인 워크로드 도입 시 구체화할 항목:
+`@task.docker` 표준 (`decisions.md` L24/L26) 의 첫 적용. DAG 파일 `dags/` 에 추가:
 
-- [ ] task image Dockerfile (`python:3.12-slim` + 도메인 deps). capability 분기 (`task-default` / `task-gpu`) 필요 시
-- [ ] 빌드·push → `registry.internal/<image>:<sha>` (절차·insecure-registries = `nexus-prime:docs/dev-guide.md`)
-- [ ] DAG: `@task.docker(image=..., force_pull=False)`, 자격증명 env 주입 (워커 `.env` 경유)
-- [ ] DooD: 3 노드 워커 compose 에 `/var/run/docker.sock` bind mount
+- `sync_matches` (`*/10`) / `sync_secondary` (`*/15`) — active-window 휴리스틱으로 평시 빈 폴링 스킵
+- `daily_meta` (`0 0 * * *` KST) — leagues >> [matches, secondary](force) >> report. report 가 xcom 수합해 한 줄 요약 (downstream report 패턴)
+- 공통 docker 설정은 `dags/data_sync_common.py` (이미지·env·DooD). 비즈니스 로직은 private 이미지(facade) 안, DAG 표면엔 generic 이름만
+
+진행:
+
+- [x] task image 빌드·push → `registry.internal:80/lck-pics/data-sync` (lck-pics repo 측 `scripts/build-and-push.sh`, arm64)
+- [x] DAG 3종 작성 (`@task.docker(force_pull=False)`, 시크릿 = Airflow Variable 템플릿 `{{ var.value.db_url/db_key }}`)
+- [ ] **전제 — 워커 docker 활성화** (아래 미충족 시 task 가 즉시 fail):
+  - [ ] 워커 이미지에 `apache-airflow-providers-docker` 추가
+  - [ ] 3 노드 워커 compose 에 `/var/run/docker.sock` bind mount (DooD)
+  - [ ] Airflow Variable `db_url` / `db_key` 등록
+- [ ] mac cron 과 1~2일 병행 검증 후 cron 제거 (이미지 태그 `latest` → `:<sha>` 핀 전환)
 - [ ] sha-pinned image 캐시 동작 검증 (노드별 첫 pull, 이후 hit)
 
 ## 미래

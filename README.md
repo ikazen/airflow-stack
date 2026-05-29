@@ -4,7 +4,7 @@
 
 배치: OCI ARM 2대 (ops-vm 컨트롤 플레인 + worker-vm 안정 워커) + M1 (mac-server burst 워커). Edge Executor 기반.
 
-현재 도메인 워크로드 없음 — 운영 DAG (`maintenance` / `test_environment`) 만 가동. DAG 배포는 GitDagBundle (`git push` → Airflow 가 repo 에서 fetch), task 로직은 `@task.docker` 이미지 (`CLAUDE.md` 코드 배포).
+도메인 워크로드 = lck.pics 데이터 동기화 (`sync_matches` / `sync_secondary` / `daily_meta`) + 운영 DAG (`maintenance` / `test_environment`). DAG 배포는 GitDagBundle (`git push` → Airflow 가 repo 에서 fetch), task 로직은 `@task.docker` 이미지 (`CLAUDE.md` 코드 배포).
 
 ## 공개 repo 정책
 
@@ -25,7 +25,7 @@ infra/                 호스트별 compose + airflow.Dockerfile + .env.example
   ops-vm/              컨트롤 플레인 (api-server/scheduler/dag-processor/edge-worker-ops)
   worker-vm/           안정 워커
   mac-server/          M1 burst 워커
-dags/                  DAG entry (maintenance / test_environment)
+dags/                  DAG entry (sync_matches / sync_secondary / daily_meta + maintenance / test_environment)
 ```
 
 ## 진입점
@@ -36,4 +36,4 @@ dags/                  DAG entry (maintenance / test_environment)
 
 ## 현재 상태
 
-플랫폼 가동 중 (컨트롤 플레인 + 워커 2, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. lol-list 워크로드·`deploy.py` 제거 (2026-05-30) — 다음 도메인 워크로드 미정, task 는 `@task.docker` 표준. 세부는 `docs/tasks.md`.
+플랫폼 가동 중 (컨트롤 플레인 + 워커 2, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. 첫 도메인 워크로드 = lck.pics 데이터 동기화 DAG 3종 추가 (2026-05-30, `@task.docker` 표준). 워커 docker 활성화(provider + 소켓 mount + Variables) 후 가동. 세부는 `docs/tasks.md`.
