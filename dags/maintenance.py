@@ -7,7 +7,7 @@ import pendulum
 from airflow.sdk import dag, task
 
 LOG_DIR = Path("/opt/airflow/logs")
-RETENTION_DAYS = 30
+RETENTION_DAYS = 14
 
 
 @dag(
