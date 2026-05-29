@@ -54,6 +54,20 @@ docker compose -f infra/<host>/docker-compose.yml start <edge-worker-service>
 
 정상 신호 = 로그 `No new job to process`. 확인 = `airflow edge list-workers` (전 워커 idle). 안 건드린 워커의 등록은 삭제 금지 (그 워커도 충돌남).
 
+## 메타 DB 정리 (db clean) — host-level, 수동
+
+`airflow db clean` 은 **DAG task 로 불가** — Airflow 3 Task SDK 가 task 에 DB 접속(`SQL_ALCHEMY_CONN`)을 주지 않음 (`Could not parse SQLAlchemy URL` 로 실패). task 는 api-server 경유만, DB 직접 접근은 컨트롤 플레인 컨테이너에서.
+
+→ 필요 시 ops-vm 에서 직접 (scheduler 컨테이너 = DB 권한 보유, task sandbox 아님):
+
+```bash
+ssh ops-vm
+docker compose -f ~/projects/airflow-stack/infra/ops-vm/docker-compose.yml exec -T scheduler \
+  airflow db clean --clean-before-timestamp "$(date -u -d '14 days ago' --iso-8601=seconds)" --skip-archive -y
+```
+
+현재 **수동/필요 시**. 메타 DB 가 disposable·소형(~11MB, 워크로드 없어 거의 안 늘어남)이라 상시 불필요(YAGNI). 고volume 워크로드 도입으로 실제 누적되면 systemd timer + 모니터링(systemd `OnFailure` 알림, 또는 node_exporter textfile → `prometheus.internal` staleness alert)으로 자동화 — 그때 결정.
+
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pendulum
@@ -19,8 +18,8 @@ RETENTION_DAYS = 14
     tags=["ops"],
 )
 def maintenance() -> None:
-    # 둘 다 queue="ops" — ops-vm 은 중앙 로그 볼륨 + 메타 DB 접근을 가진 컨트롤 플레인.
-    # NAT 뒤 도메인 워커(worker-vm/mac-server)는 DB 안 침 (CLAUDE.md Edge Executor 원칙).
+    # queue="ops" — task 로그가 모이는 ops-vm 중앙 로그 볼륨에서 실행돼야 함.
+    # 메타 DB 정리(db clean)는 task 로 불가 (Task SDK 가 task 에 DB 접속을 안 줌) → host-level, docs/runbook.md 참조.
 
     @task(queue="ops")
     def cleanup_task_logs(retention_days: int = RETENTION_DAYS) -> int:
@@ -36,17 +35,7 @@ def maintenance() -> None:
                 d.rmdir()
         return deleted
 
-    @task(queue="ops")
-    def db_clean(retention_days: int = RETENTION_DAYS) -> None:
-        """메타 DB 의 오래된 행 purge. disposable DB 라 --skip-archive."""
-        cutoff = pendulum.now("UTC").subtract(days=retention_days).isoformat()
-        subprocess.run(
-            ["airflow", "db", "clean", "--clean-before-timestamp", cutoff, "--skip-archive", "-y"],
-            check=True,
-        )
-
     cleanup_task_logs()
-    db_clean()
 
 
 maintenance()
