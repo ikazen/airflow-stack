@@ -4,7 +4,7 @@
 
 배치: OCI ARM 2대 (ops-vm 컨트롤 플레인 + worker-vm 안정 워커) + M1 (mac-server burst 워커). Edge Executor 기반.
 
-현재 도메인 워크로드 없음 — 운영 DAG (`deploy` / `cleanup_logs` / `test_environment`) 만 가동.
+현재 도메인 워크로드 없음 — 운영 DAG (`cleanup_logs` / `test_environment`) 만 가동. 워크로드 task 의 기본은 `@task.docker` (라이브러리·숨길 로직은 task 이미지로 — `CLAUDE.md` 코드 배포).
 
 ## 공개 repo 정책
 
@@ -16,7 +16,7 @@
 docs/                  설계 / 결정 / 운영 문서
   architecture.md      서비스 배치 + Edge Executor + 인프라 의존
   decisions.md         잠긴 결정 / 재고 가능 / 열린 결정
-  tasks.md             Phase 진행 (현재 Phase 6 완료, Phase 9 계획)
+  tasks.md             진행 상태 + 방향
   setup.md             셋업 절차
   runbook.md           정상 운영 절차
   troubleshooting.md   문제 진단·해결 사례
@@ -25,7 +25,7 @@ infra/                 호스트별 compose + airflow.Dockerfile + .env.example
   ops-vm/              컨트롤 플레인 (api-server/scheduler/dag-processor/edge-worker-ops)
   worker-vm/           안정 워커
   mac-server/          M1 burst 워커
-dags/                  DAG entry (deploy / cleanup_logs / test_environment)
+dags/                  DAG entry (cleanup_logs / test_environment)
 ```
 
 ## 진입점
@@ -36,4 +36,4 @@ dags/                  DAG entry (deploy / cleanup_logs / test_environment)
 
 ## 현재 상태
 
-플랫폼 가동 중 (컨트롤 플레인 + 3 워커, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. lol-list 워크로드는 제거 (2026-05-30) — 다음 도메인 워크로드 미정. 세부는 `docs/tasks.md`.
+플랫폼 가동 중 (컨트롤 플레인 + 워커 2, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. lol-list 워크로드·`deploy.py` 제거 (2026-05-30) — 다음 도메인 워크로드 미정, task 는 `@task.docker` 표준. 세부는 `docs/tasks.md`.

@@ -4,9 +4,11 @@
 
 **플랫폼 가동 — 컨트롤 플레인 (ops-vm) + 워커 2 (worker-vm, mac-server), Edge Executor.** 인프라 layer 는 `nexus-prime` 으로 분리 완료.
 
-**lol-list 워크로드 제거 (2026-05-30)** — DAG 3종 + 전용 인프라 (compose bind mount/PYTHONPATH, Dockerfile 도메인 deps, supabase 변수) 일체 제거. 현재 도메인 워크로드 없음, 운영 DAG (`deploy`/`cleanup_logs`/`test_environment`) 만 가동.
+**lol-list 워크로드 + `deploy.py` 제거 (2026-05-30)** — lol DAG 3종·전용 인프라(bind mount/PYTHONPATH/도메인 deps/변수) 및 git-clone 기반 `deploy.py`·Variables import 메커니즘 일체 제거. 현재 운영 DAG (`cleanup_logs`/`test_environment`) 만 가동.
 
-다음 액션: 차기 도메인 워크로드 미정. 워크로드 등장 시 실행 환경 격리 패턴 (dormant `decisions.md` L24/L26) 재검토.
+**방향 확정: 워크로드 task 의 기본 = `@task.docker`** (라이브러리·숨길 로직은 task 이미지로, `decisions.md` L24/L26). airflow 이미지는 thin (edge3 만).
+
+다음 액션: 차기 도메인 워크로드 미정. DAG 파일 운반 방법은 열린 결정 (`decisions.md` R2).
 
 ## Phase 0 — 옛 자산 정리
 
@@ -48,7 +50,7 @@ OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부
 
 ## Phase 6 — lol-list 이관 (제거됨 2026-05-30)
 
-~~lol-list ETL 3종 이관·엔드투엔드 검증 완료 (2026-05-23).~~ 워크로드 제거로 무효. 배포 DAG `dags/deploy.py` 는 lol 무관 운영 DAG 라 유지.
+~~lol-list ETL 3종 이관·엔드투엔드 검증 완료 (2026-05-23).~~ 워크로드 제거로 무효.
 
 ## Phase 7 — 플랫폼 검증
 
@@ -65,9 +67,15 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 - [ ] airflow metrics 노출 (StatsD exporter → prometheus.internal scrape)
 - [ ] Notification + 알람 3종
 
-## 실행 환경 격리 — dormant (lol-list 제거로 보류)
+## 실행 환경 격리 — `@task.docker` (표준)
 
-운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리 (`@task.docker` + sha-pinned registry image, `decisions.md` L24/L26). lol-list 의 deps 결합·노드 환경 매트릭스 문제 해소가 동기였으나 워크로드 제거로 보류. 차기 컨테이너 도메인 워크로드 등장 시 재활성 — registry 는 `registry.internal` (`nexus-prime:docs/dev-guide.md`).
+운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리 = 모든 워크로드의 기본 (`decisions.md` L24/L26). 첫 도메인 워크로드 도입 시 구체화할 항목:
+
+- [ ] task image Dockerfile (`python:3.12-slim` + 도메인 deps). capability 분기 (`task-default` / `task-gpu`) 필요 시
+- [ ] 빌드·push → `registry.internal/<image>:<sha>` (절차·insecure-registries = `nexus-prime:docs/dev-guide.md`)
+- [ ] DAG: `@task.docker(image=..., force_pull=False)`, 자격증명 env 주입 (워커 `.env` 경유)
+- [ ] DooD: 3 노드 워커 compose 에 `/var/run/docker.sock` bind mount
+- [ ] sha-pinned image 캐시 동작 검증 (노드별 첫 pull, 이후 hit)
 
 ## 미래
 

@@ -11,7 +11,7 @@ ssh <host>
 git clone git@github.com:<your-repo>/airflow-stack.git ~/airflow-stack
 ```
 
-DAG 파일은 `dags/` bind mount 로 운반. task body 도메인 코드는 Phase 9 에서 registry image 로 분리 예정.
+DAG 파일은 `dags/` bind mount 로 운반. task body 도메인 코드·라이브러리는 `@task.docker` image (`registry.internal`) 로 분리 — `decisions.md` L24.
 
 ## 2. ops-vm — control plane
 
@@ -24,7 +24,7 @@ $EDITOR infra/ops-vm/.env   # Fernet / JWT / Postgres conn / Edge API URL / OPS_
 docker compose -f infra/ops-vm/docker-compose.yml up -d
 ```
 
-서비스: `airflow-init` (1 회, db migrate + variables import) → `api-server` / `scheduler` / `dag-processor` / `edge-worker-ops`.
+서비스: `airflow-init` (1 회, `airflow db migrate`) → `api-server` / `scheduler` / `dag-processor` / `edge-worker-ops`.
 
 검증:
 - `https://airflow.<your-domain>` 로그인 (admin 비번 = `docker exec api-server cat .../simple_auth_manager_passwords.json.generated`)

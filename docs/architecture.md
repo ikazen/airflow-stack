@@ -35,7 +35,7 @@ scheduler 와 다른 컨테이너로 격리. 파싱 오류가 scheduler 에 영�
 
 api-server·scheduler·dag-processor·워커 모두 공식 `apache/airflow:3.2.x` 확장 커스텀 이미지 — edge3 provider 가 공식 이미지엔 없음. 빌드는 `docs/setup.md`.
 
-Phase 9 (계획) 에서 task 실행은 별도 image (`@task.docker`) 로 — `decisions.md` L24, `tasks.md` Phase 9.
+워크로드 task 실행은 `@task.docker` 별도 image (표준) — 도메인 deps 는 거기로, airflow 이미지는 thin. `decisions.md` L24/L26.
 
 ## 인프라 의존 (nexus-prime 제공)
 
@@ -43,7 +43,7 @@ Phase 9 (계획) 에서 task 실행은 별도 image (`@task.docker`) 로 — `de
 
 - `nexus` docker network (external) — airflow 서비스가 join (`networks: { nexus: { external: true } }`)
 - `postgres:5432` — 공유 DB 안 `airflow` database (DB/user 발급은 dev-guide)
-- `registry.internal` — task image registry (Phase 9 활용 예정). DNS 미작동 시 fallback `<ops-vm-tailnet>:5000`
+- `registry.internal` — `@task.docker` image registry. DNS 미작동 시 fallback `<ops-vm-tailnet>:5000`
 - 워커 → api-server = Tailscale 직결 (cert 불필요, edge API 공인 노출 X)
 
 airflow 는 nexus-prime 의 `compose/_hosts/` include 가 아니라 **별도 repo 의 자체 compose** 로 외부 `nexus` 네트워크에 join — dev-guide 의 "신규 서비스 추가 체크리스트" (nexus-prime 내부 서비스용) 와 구분.

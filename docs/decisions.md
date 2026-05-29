@@ -16,15 +16,15 @@ Airflow workload 결정. 인프라 결정은 `nexus-prime:docs/decisions.md`.
 | L19 | 컨트롤 플레인·워커 = 커스텀 이미지 (`apache/airflow:3.2.x` + edge3) | 공식 이미지에 edge3 미포함. 도메인 deps 는 lol-list 제거로 없음 (2026-05-30) |
 | L21 | 공개 repo 이름 = `airflow-stack` | 로컬 디렉토리·README 와 일치, rename 불필요 |
 | L23 | ~~lol-list = `pip install` 가능 패키지~~ → lol-list 워크로드 제거로 무효 (2026-05-30) | (lol 전용 결정) |
-| L24 | DAG task 실행 = `@task.docker` (별도 컨테이너, DooD). 워커 = thin runtime | 운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리. **현재 도메인 워크로드 없어 dormant** — 차기 컨테이너 워크로드 등장 시 적용 |
-| L26 | image 태그 = sha-pinned, `force_pull=False` | k8s `IfNotPresent` 등가. immutable tag = 캐시 hit 안전. **L24 와 함께 dormant** |
+| L24 | **워크로드 task 의 기본 = `@task.docker`** (별도 컨테이너, DooD). 워커 = thin runtime | 운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리. 라이브러리·숨길 로직은 task 이미지에. 노드별 환경 매트릭스 = task image 단위. DooD 보안 implication 은 신뢰 self-host 전제 (2026-05-30 표준 확정) |
+| L26 | task image 태그 = sha-pinned, `force_pull=False` | k8s `IfNotPresent` 등가. immutable tag = 캐시 hit 안전, mutable tag 비결정성 회피. 노드별 sha 당 1 회 pull |
 
 ## 재고 가능 결정
 
 | # | 결정 / 현재 | 재고 트리거 | 마이그레이션 |
 |---|---|---|---|
 | R1 | ~~워크로드 모델링 — lol-list v1 = 전통 `@dag`~~ → lol-list 제거로 무효 (2026-05-30). 모델링 선택 기준은 CLAUDE.md "워크로드 모델링" | 차기 도메인 워크로드 도입 시 재적용 | — |
-| R2 | ~~코드 배포 — 수동 `git pull` + restart~~ → L24·L25 로 해소 (2026-05-24) | — | DAG 파일은 git, task body 는 registry image (sha-pinned). 자동화는 GitHub Actions → registry push 로 자연 확장 |
+| R2 | 코드 배포 — task body 는 L24 (`@task.docker` image, sha-pinned). DAG 파일 운반 = **미정** (`deploy.py` 폐기 2026-05-30) | DAG 추가 빈도 ↑ | DAG bundle (remote storage) 또는 git pull 자동화. 자동화는 GitHub Actions → registry push 로 자연 확장 |
 | R3 | Auth manager — `SimpleAuthManager` (Airflow 3 기본) | 다중 사용자 / RBAC, 또는 UI 노출 표면 확대 | `FabAuthManager` 전환 |
 | R4 | Triggerer — v1 스킵 | deferrable operator / async sensor 필요 | triggerer 컨테이너 추가 |
 

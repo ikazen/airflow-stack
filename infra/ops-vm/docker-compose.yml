@@ -4,13 +4,7 @@ services:
       context: ../..
       dockerfile: infra/airflow.Dockerfile
     env_file: .env
-    command: >
-      bash -c "
-        airflow db migrate &&
-        { [ -f /opt/airflow/config/airflow-variables.json ] && airflow variables import /opt/airflow/config/airflow-variables.json || true; }
-      "
-    volumes:
-      - ./airflow-variables.json:/opt/airflow/config/airflow-variables.json:ro
+    command: airflow db migrate
     networks:
       - nexus
     # postgres 가 다른 compose (nexus-prime) 에 있어 cross-compose depends_on 불가.

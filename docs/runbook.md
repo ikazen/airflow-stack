@@ -27,23 +27,12 @@ PostgreSQL 15+ 는 public 스키마 CREATE 권한이 기본 미포함 — 아래
 docker exec -it postgres psql -U postgres -d airflow -c "GRANT ALL ON SCHEMA public TO airflow;"
 ```
 
-## airflow-variables.json 생성 (최초 1회 / 재배포 시)
-
-gitignored. ops-vm 에서 직접 생성. 형식:
-
-```json
-{
-  "key1": "value1",
-  "key2": "value2"
-}
-```
-
-실제 값은 Bitwarden `secrets-backup.md` 참조. 파일이 없으면 `airflow-init` 이 `db migrate` 만 실행하고 import 는 건너뜀 (정상 종료).
+Airflow Variables / Connections 는 미사용 — task 자격증명은 워커 `.env` → `@task.docker` 컨테이너 env 주입. 메타 DB 에 코드 아닌 상태 없음 (disposable, `decisions.md` L10).
 
 ## 작성 예정
 
 - 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
-- 코드 배포 (Phase 9 후) — DAG 파일은 git pull, task body 는 `registry.internal` push (push·insecure-registries 절차 = `nexus-prime:docs/dev-guide.md`)
+- 코드 배포 — DAG 파일 운반 (미정), task body 는 `@task.docker` 이미지 `registry.internal` push (push·insecure-registries 절차 = `nexus-prime:docs/dev-guide.md`)
 - 워커 재기동 (worker-vm container restart / mac-server `launchctl unload+load` 또는 `docker compose restart`)
 - Secrets 회전 (Fernet / JWT — Postgres pw 는 nexus-prime)
 - 인스턴스 / 메타 손실 시 재배포 복구 (백업 없음 — nexus-prime L7)

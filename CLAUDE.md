@@ -35,13 +35,18 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 
 노드 간 = Tailscale. 공인 노출 = Caddy 뒤 UI/API 한 군데. SSH 공개 폐지, 본인 IP /32 fallback.
 
-## 코드 배포 (v1)
+## 코드 배포
 
-전 호스트에 git clone (코드 운반). 런타임 = edge3 포함 커스텀 이미지 컨테이너 (M1 은 Phase 5 결정). 변경 = 각 호스트 `git pull` + 영향 컨테이너 / launchd restart.
+2층 모델 (`decisions.md` L24/L26):
+
+- **task body 로직 + 라이브러리 + 숨길 로직** = `@task.docker` 이미지 (sha-pinned, `registry.internal`). 워크로드 의존성은 여기로. 컨트롤 플레인/워커 이미지엔 도메인 deps 안 박음
+- **DAG 파일** (`dags/`) = dag-processor 에 bind mount 로 운반. 운반 방법 (git pull 등) 미정
+
+컨트롤 플레인·워커 런타임 = thin 커스텀 이미지 (`apache/airflow:3.2.x` + edge3 만).
 
 ## 의존성
 
-`apache-airflow==3.2.x` + provider 핀. constraints file + uv lock.
+airflow 이미지: `apache-airflow==3.2.x` + edge3 핀만 (thin). 도메인 deps 는 `@task.docker` task 이미지에. constraints file + uv lock.
 
 ## 문서화
 
