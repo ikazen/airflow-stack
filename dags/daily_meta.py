@@ -25,6 +25,7 @@ DOCKER = dict(
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     max_active_runs=1,
+    default_args={"retries": 2, "retry_delay": pendulum.duration(minutes=1)},
     tags=["lck-pics", "etl"],
 )
 def daily_meta() -> None:
