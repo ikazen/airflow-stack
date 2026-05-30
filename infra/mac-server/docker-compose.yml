@@ -6,6 +6,12 @@ services:
     env_file: .env
     hostname: mac-server
     command: airflow edge worker --queues gpu,default --concurrency 8
+    # sleep/wake 후 wake 훅이 force-recreate 시, 좀비 job 을 빠르게 drain·종료해
+    # 깨끗이 OFFLINE 등록되도록 (drain_timeout=0 이면 무한 대기 → terminating 에 묶임).
+    environment:
+      AIRFLOW__EDGE__DRAIN_TIMEOUT_SEC: "10"
+      AIRFLOW__EDGE__DRAIN_KILL_GRACE_SEC: "5"
+    stop_grace_period: 30s   # drain(10s)+kill_grace(5s) 동안 docker 가 SIGKILL 안 하도록
     # DooD: airflow uid(50000)가 docker gid에 속해야 socket 접근 가능 (Colima VM)
     group_add:
       - "${DOCKER_GID}"
