@@ -25,6 +25,7 @@ DOCKER = dict(
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     max_active_runs=1,
+    default_args={"execution_timeout": pendulum.duration(minutes=5)},
     tags=["lck-pics", "etl"],
 )
 def sync_secondary() -> None:
