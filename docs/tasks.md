@@ -54,7 +54,7 @@
 
 워크로드와 무관한 플랫폼 안정성 (운영 DAG / `test_environment` 로 확인 가능):
 
-- [ ] DAG Versioning UI 확인 (GitDagBundle commit pin, L27)
+- [x] DAG Versioning UI 확인 (GitDagBundle commit pin, L27)
 - [ ] M1 power-cycle 시 gpu queue 자연 복귀
 - [ ] M1 sleep 중 in-flight task zombie 처리 후 retry
 
