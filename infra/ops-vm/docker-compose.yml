@@ -23,6 +23,7 @@ services:
       - "${OPS_TAILNET_IP}:8080:8080"
     command: airflow api-server
     volumes:
+      - /home/ubuntu/airflow-local/passwords.json:/opt/airflow/local/passwords.json
       - airflow-logs:/opt/airflow/logs
     logging:
       driver: json-file
