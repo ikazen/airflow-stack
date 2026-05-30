@@ -60,6 +60,7 @@ def test_environment() -> None:
 
     @task(queue="gpu")
     def gpu_node_env() -> None:
+        import time
         import airflow
 
         try:
@@ -74,6 +75,8 @@ def test_environment() -> None:
         print(f"airflow   : {airflow.__version__}")
         print(f"edge3     : {edge3_ver}")
         print(f"api url   : {os.getenv('AIRFLOW__EDGE__API_URL', '-')}")
+        print("sleeping 300s for sleep/wake test...")
+        time.sleep(300)
 
     main_node_env() >> worker_node_env() >> gpu_node_env()
 
