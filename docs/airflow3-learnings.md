@@ -49,11 +49,3 @@
 - 3.2.x 라인: `-c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt`
 - provider 들이 빠르게 다듬어지는 중 → 핀 필수
 
-## 운영 중 추가할 항목
-
-(실제 발견 시 채움 — troubleshooting.md 의 사례와 별개로, 신기능 학습 노트만)
-
-- Edge Worker 의 registration / heartbeat 동작 (UI 디테일)
-- DAG Versioning 의 retention (old version store size)
-- M1 sleep/wake 시 edge worker 재연결 latency
-- `EdgeExecutor` import path 확인 완료 (2026-05): provider `apache-airflow-providers-edge3`, executor `airflow.providers.edge3.executors.EdgeExecutor`

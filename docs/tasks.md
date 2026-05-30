@@ -13,20 +13,6 @@
 
 **첫 도메인 워크로드 = lck.pics 데이터 동기화 DAG 3종 추가 (2026-05-30)** — `@task.docker` 표준 첫 적용. 워커 docker 활성화(provider + 소켓 mount + Variables) 후 가동. 상세는 아래 "첫 도메인 워크로드".
 
-다음 액션: 워커 docker 활성화 → mac cron 병행 검증.
-
-## Phase 0 — 옛 자산 정리
-
-- [x] ~~옛 n8n 워크플로 export 백업~~ — 불필요, 생략
-- [x] 옛 OCI 인스턴스·Boot 볼륨·VCN 일체 termination (2026-05-22)
-- [x] 옛 OCI API key 회수 (2026-05-22)
-- [x] DNS `n8n.<your-domain>` 레코드 제거
-- [x] 옛 repo archive 표기
-
-## Phase 1, 2, 5 인프라 — `nexus-prime` 으로 이주 (2026-05-24)
-
-OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부분 (Phase 5: Tailscale, Homebrew, Colima, LaunchAgent) = 모두 `nexus-prime`. 작업 자체는 2026-05-23 완료, 코드·문서만 이주. history 는 git log + nexus-prime decisions cross-ref.
-
 ## Phase 3 — 컨트롤 플레인 (ops-vm, airflow 부분만)
 
 - [x] `infra/airflow.Dockerfile`: `apache/airflow:3.2.1` + `apache-airflow-providers-edge3` (현재 3.6.0)
@@ -52,10 +38,6 @@ OCI 재구축 (Phase 1) / 호스트 부트스트랩 (Phase 2) / M1 인프라 부
 - [x] UI Edge Workers 탭 확인 (2026-05-23)
 - [x] `queue="gpu"` 라우팅 검증 (2026-05-24)
 - [ ] sleep/wake 후 worker 자연 복귀 (Phase 7 과 합쳐도 됨)
-
-## Phase 6 — lol-list 이관 (제거됨 2026-05-30)
-
-~~lol-list ETL 3종 이관·엔드투엔드 검증 완료 (2026-05-23).~~ 워크로드 제거로 무효.
 
 ## GitDagBundle 전환 (L27, 2026-05-30)
 

@@ -36,4 +36,4 @@ dags/                  DAG entry (sync_matches / sync_secondary / daily_meta + m
 
 ## 현재 상태
 
-플랫폼 가동 중 (컨트롤 플레인 + 워커 2, Edge Executor). 인프라 layer 는 `nexus-prime` 으로 분리 완료. 첫 도메인 워크로드 = lck.pics 데이터 동기화 DAG 3종 추가 (2026-05-30, `@task.docker` 표준). 워커 docker 활성화(provider + 소켓 mount + Variables) 후 가동. 세부는 `docs/tasks.md`.
+플랫폼 가동 중. lck.pics 동기화 DAG 3종 운영 중 (`@task.docker`). 진행 상황은 `docs/tasks.md`.

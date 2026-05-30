@@ -56,5 +56,3 @@ api-server·scheduler·dag-processor·워커 모두 공식 `apache/airflow:3.2.x
 - 워커 → api-server = Tailscale 직결 (cert 불필요, edge API 공인 노출 X)
 
 airflow 는 nexus-prime 의 `compose/_hosts/` include 가 아니라 **별도 repo 의 자체 compose** 로 외부 `nexus` 네트워크에 join — dev-guide 의 "신규 서비스 추가 체크리스트" (nexus-prime 내부 서비스용) 와 구분.
-
-전통 `@dag` / `@asset` 선택 기준은 CLAUDE.md "워크로드 모델링" 섹션.

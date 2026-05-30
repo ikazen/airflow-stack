@@ -21,7 +21,6 @@ def test_environment() -> None:
 
     @task(queue="ops")
     def main_node_env() -> None:
-        """ops-vm (ops 큐 edge worker) 실행 환경"""
         import airflow
 
         try:
@@ -40,7 +39,6 @@ def test_environment() -> None:
 
     @task(queue="default")
     def worker_node_env() -> None:
-        """worker-vm (default 큐 edge worker) 실행 환경"""
         import airflow
 
         try:
@@ -62,7 +60,6 @@ def test_environment() -> None:
 
     @task(queue="gpu")
     def gpu_node_env() -> None:
-        """mac-server (gpu 큐 edge worker, Colima Linux VM) 실행 환경"""
         import airflow
 
         try:

@@ -6,8 +6,7 @@ services:
     env_file: .env
     hostname: mac-server
     command: airflow edge worker --queues gpu,default --concurrency 8
-    # DooD — @task.docker 가 (Colima VM) docker 로 sibling 컨테이너 기동. socket 그룹 권한은
-    # group_add (airflow uid 50000 이 docker gid 그룹에 들어가야 socket 접근 가능).
+    # DooD: airflow uid(50000)가 docker gid에 속해야 socket 접근 가능 (Colima VM)
     group_add:
       - "${DOCKER_GID}"
     volumes:
