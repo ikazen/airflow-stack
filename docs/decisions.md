@@ -25,7 +25,7 @@ Airflow workload 결정. 인프라 결정은 `nexus-prime:docs/decisions.md`.
 | R1 | ~~워크로드 모델링 — lol-list v1 = 전통 `@dag`~~ → lol-list 제거로 무효 (2026-05-30). 모델링 선택 기준은 CLAUDE.md "워크로드 모델링" | 차기 도메인 워크로드 도입 시 재적용 | — |
 | R2 | 코드 배포 — DAG 파일 = L27 (GitDagBundle), task body = L24 (`@task.docker` image, sha-pinned) | 둘 다 확정 (2026-05-30) | task image 빌드·push 자동화는 GitHub Actions → `registry.internal` 로 자연 확장 |
 | R3 | Auth manager — `SimpleAuthManager` (Airflow 3 기본) | 다중 사용자 / RBAC, 또는 UI 노출 표면 확대 | `FabAuthManager` 전환 |
-| R4 | Triggerer — v1 스킵 | deferrable operator / async sensor 필요 | triggerer 컨테이너 추가 |
+| R4 | Triggerer — ops-vm 컨테이너로 추가 (2026-05-30) | 향후 deferrable 사용 가능성 | — |
 
 R3 주의: SimpleAuthManager 는 Apache 공식 문서가 "dev/test 전용, production 비권장" 으로 명시. 단일 사용자 + 공개 표면 최소화 (nexus-prime L11 — edge API 비공개) 전제로 v1 채택. UI 노출 확대 시 R3 즉시 재고.
 

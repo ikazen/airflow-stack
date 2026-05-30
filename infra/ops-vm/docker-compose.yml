@@ -74,6 +74,26 @@ services:
       - nexus
     restart: unless-stopped
 
+  triggerer:
+    build:
+      context: ../..
+      dockerfile: infra/airflow.Dockerfile
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    env_file: .env
+    command: airflow triggerer
+    volumes:
+      - airflow-logs:/opt/airflow/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - nexus
+    restart: unless-stopped
+
   edge-worker-ops:
     build:
       context: ../..
