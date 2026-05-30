@@ -37,7 +37,7 @@
 - [x] `docker compose up -d` (2026-05-23)
 - [x] UI Edge Workers 탭 확인 (2026-05-23)
 - [x] `queue="gpu"` 라우팅 검증 (2026-05-24)
-- [ ] sleep/wake 후 worker 자연 복귀 (Phase 7 과 합쳐도 됨)
+- [x] sleep/wake 후 worker 자연 복귀 (2026-05-31, Phase 7 에서 종합 검증)
 
 ## GitDagBundle 전환 (L27, 2026-05-30)
 
@@ -55,8 +55,8 @@
 워크로드와 무관한 플랫폼 안정성 (운영 DAG / `test_environment` 로 확인 가능):
 
 - [x] DAG Versioning UI 확인 (GitDagBundle commit pin, L27)
-- [ ] M1 power-cycle 시 gpu queue 자연 복귀
-- [ ] M1 sleep 중 in-flight task zombie 처리 후 retry
+- [x] M1 power-cycle 시 gpu queue 자연 복귀 (2026-05-31, idle sleep/wake → ~20s 내 복귀)
+- [x] M1 sleep 중 in-flight task zombie 처리 후 retry (2026-05-31, sleepwatcher wake 훅 + drain_timeout fix + scheduler heartbeat-timeout reconcile. 상세 `troubleshooting.md`)
 
 ## Phase 8 — 모니터링 (Phase 7 후)
 
