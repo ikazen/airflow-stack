@@ -9,4 +9,4 @@
 """
 from __future__ import annotations
 
-IMAGE = "registry.internal:80/lck-pics/data-sync:latest"
+IMAGE = "registry.internal:80/lck-pics/data-sync:19a4f48"
