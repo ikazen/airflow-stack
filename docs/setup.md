@@ -56,6 +56,26 @@ docker compose -f infra/mac-server/docker-compose.yml up -d
 
 검증: UI Edge Workers 탭 — `mac-server` healthy, `gpu` queue dummy task 라우팅 정상.
 
+### sleep/wake 자동 복구 (mac 1회 셋업)
+
+mac sleep 중이던 task 가 깨어나면 좀비가 되고 worker 가 wedge 됨 (배경·진단은 `troubleshooting.md`). wake 시 worker 를 깨끗이 재생성해 방지:
+
+`~/.wakeup` (로컬 파일 — git 미포함):
+```sh
+#!/bin/sh
+export DOCKER_HOST="unix:///Users/<your-user>/.colima/default/docker.sock"
+COMPOSE=/Users/<your-user>/projects/airflow-stack/infra/mac-server
+for i in $(seq 1 30); do /opt/homebrew/bin/docker info >/dev/null 2>&1 && break; sleep 2; done
+/opt/homebrew/bin/docker compose -f "$COMPOSE/docker-compose.yml" --env-file "$COMPOSE/.env" up -d --force-recreate edge-worker
+```
+```
+chmod +x ~/.wakeup
+brew install sleepwatcher && brew services start sleepwatcher   # -w ~/.wakeup
+```
+복구 로그: `~/Library/Logs/edge-worker-wake.log`.
+
+손실이 치명적인 default 큐 DAG 에는 `retries` 지정 (예: `daily_meta`). 잦은 DAG (`sync_*`) 는 다음 발화가 흡수하므로 불필요.
+
 ## Secrets
 
 - `.env` 커밋 금지 (`.env.example` 만)
