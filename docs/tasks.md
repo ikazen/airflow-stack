@@ -4,7 +4,7 @@
 
 **플랫폼 가동 — 컨트롤 플레인 (ops-vm) + 워커 2 (worker-vm, mac-server), Edge Executor.** 인프라 layer 는 `nexus-prime` 으로 분리 완료.
 
-**lol-list 워크로드 + `deploy.py` 제거 (2026-05-30)** — lol DAG 3종·전용 인프라(bind mount/PYTHONPATH/도메인 deps/변수) 및 git-clone 기반 `deploy.py`·Variables import 메커니즘 일체 제거. 현재 운영 DAG (`maintenance`/`test_environment`) 만 가동.
+**lol-list 워크로드 + `deploy.py` 제거 (2026-05-30)** — lol DAG 3종·전용 인프라(bind mount/PYTHONPATH/도메인 deps/변수) 및 git-clone 기반 `deploy.py`·Variables import 메커니즘 일체 제거.
 
 **방향 확정 (`decisions.md`):**
 - 워크로드 task 의 기본 = `@task.docker` (라이브러리·숨길 로직은 task 이미지로, L24/L26)
@@ -48,7 +48,7 @@
 - [x] 3 호스트 `.env`: `AIRFLOW__DAG_PROCESSOR__DAG_BUNDLE_CONFIG_LIST` (public repo, `repo_url` 직접) + `up -d --build`
 - [x] dag-processor 가 git 에서 DAG fetch·파싱 확인
 - [x] 워커가 task 실행 시 bundle materialize 확인 (`test_environment` 3 큐 success)
-- [ ] `git push` 로 `maintenance` DAG 추가 → bundle 반영 확인 (push→배포 테스트)
+- [x] `git push` 로 `maintenance` DAG 추가 → bundle 반영 확인 (push→배포 테스트)
 
 ## Phase 7 — 플랫폼 검증
 
@@ -80,11 +80,11 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 - [x] **전제 — 워커 docker 활성화 (코드)**:
   - [x] 워커 이미지에 `apache-airflow-providers-docker==4.5.5` 추가 (3.2.1 constraints 핀)
   - [x] `default` 큐 워커 2노드(worker-vm, mac-server) compose 에 socket mount + `group_add: ${DOCKER_GID}` (DooD). ops-vm 은 `ops` 큐 전용이라 제외
-- [ ] **전제 — 배포 시 1회 (호스트/운영자)**:
-  - [ ] 각 워커 `.env` 에 `DOCKER_GID` (host/Colima docker 그룹 gid — `.env.example` 참조) 후 `up -d --build`
-  - [ ] Airflow Variable `db_url` / `db_key` 등록
-- [ ] mac cron 과 1~2일 병행 검증 후 cron 제거 (이미지 태그 `latest` → `:<sha>` 핀 전환)
-- [ ] sha-pinned image 캐시 동작 검증 (노드별 첫 pull, 이후 hit)
+- [x] **전제 — 배포 시 1회 (호스트/운영자)**:
+  - [x] 각 워커 `.env` 에 `DOCKER_GID` (host/Colima docker 그룹 gid — `.env.example` 참조) 후 `up -d --build`
+  - [x] Airflow Variable `db_url` / `db_key` 등록
+- [x] mac cron 병행 검증 후 cron 제거
+- [x] sha-pinned image 전환 (`latest` → `:19a4f48`, `data_sync_common.py`)
 
 ## 미래
 
