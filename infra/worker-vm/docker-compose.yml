@@ -6,6 +6,12 @@ services:
     env_file: .env
     network_mode: host
     command: airflow edge worker --queues default --concurrency 4
+    # DooD — @task.docker 가 host docker 로 sibling 컨테이너 기동. socket 그룹 권한은
+    # group_add (airflow uid 50000 이 host docker gid 그룹에 들어가야 socket 접근 가능).
+    group_add:
+      - "${DOCKER_GID}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: json-file
       options:

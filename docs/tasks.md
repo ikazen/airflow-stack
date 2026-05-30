@@ -95,9 +95,11 @@ nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metr
 
 - [x] task image 빌드·push → `registry.internal:80/lck-pics/data-sync` (lck-pics repo 측 `scripts/build-and-push.sh`, arm64)
 - [x] DAG 3종 작성 (`@task.docker(force_pull=False)`, 시크릿 = Airflow Variable 템플릿 `{{ var.value.db_url/db_key }}`)
-- [ ] **전제 — 워커 docker 활성화** (아래 미충족 시 task 가 즉시 fail):
-  - [ ] 워커 이미지에 `apache-airflow-providers-docker` 추가
-  - [ ] 3 노드 워커 compose 에 `/var/run/docker.sock` bind mount (DooD)
+- [x] **전제 — 워커 docker 활성화 (코드)**:
+  - [x] 워커 이미지에 `apache-airflow-providers-docker==4.5.5` 추가 (3.2.1 constraints 핀)
+  - [x] `default` 큐 워커 2노드(worker-vm, mac-server) compose 에 socket mount + `group_add: ${DOCKER_GID}` (DooD). ops-vm 은 `ops` 큐 전용이라 제외
+- [ ] **전제 — 배포 시 1회 (호스트/운영자)**:
+  - [ ] 각 워커 `.env` 에 `DOCKER_GID` (host/Colima docker 그룹 gid — `.env.example` 참조) 후 `up -d --build`
   - [ ] Airflow Variable `db_url` / `db_key` 등록
 - [ ] mac cron 과 1~2일 병행 검증 후 cron 제거 (이미지 태그 `latest` → `:<sha>` 핀 전환)
 - [ ] sha-pinned image 캐시 동작 검증 (노드별 첫 pull, 이후 hit)
