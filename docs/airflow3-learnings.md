@@ -49,6 +49,12 @@
 - 3.2.x 라인: `-c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt`
 - provider 들이 빠르게 다듬어지는 중 → 핀 필수
 
+### 메트릭 (StatsD) — 어느 프로세스가 emit 하나
+- 이미지에 `statsd` 클라이언트 필요 (공식 image 미포함). `[metrics] statsd_on/host/port/prefix`. 태그 메트릭은 `statsd_influxdb_enabled=True` → statsd-exporter 가 influx 태그를 라벨로 파싱.
+- **함정: api-server(uvicorn) 프로세스는 metrics 클라이언트를 init 하지 않음.** scheduler / dag-processor / triggerer / edge-worker(장기 실행 job)만 emit. → api-server 요청 핸들러 안에서 부르는 `Stats`(edge3 의 `edge_worker.*`: set_state heartbeat 에서 emit)는 statsd 로 안 나감. 네트워크/influx 파싱은 정상인데(raw UDP 는 도달) Airflow Stats 만 무음.
+- 결과: `edge_worker.connected` 기반 "워커 오프라인" 알람 불가. 게다가 scheduler 의 liveness 가 UNKNOWN 시 `connected=0` 만 찍고 복구 시 1 을 안 찍어 알람이 안 풀림. → 워커 오프라인은 `node_exporter` `up`(NodeDown, mac 포함)으로 대체.
+- 잘 나오는 것(scheduler/dag-processor 발): `scheduler_heartbeat`, `dag_processing.import_errors`, `dagrun.duration.failed.<dag_id>` 등 → 알람은 이걸로.
+
 ## Edge worker sleep/wake (intermittent 노트북 워커)
 
 mac-server 는 클램쉘 노트북 → 자주 sleep. "sleep 중 돌던 task 와 worker 가 깨어나면 어떻게 되나" 를 파고든 기록. (운영 절차는 `troubleshooting.md`/`setup.md`, 여긴 "왜 그렇게 동작하는가")

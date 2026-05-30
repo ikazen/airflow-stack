@@ -62,8 +62,9 @@
 
 nexus-prime 가 `prometheus.internal` 제공 (dev-guide) — airflow StatsD/metrics 노출 후 scrape 대상 등록은 nexus-prime 측. Cloud Guard/Budget 은 OCI 레벨 (nexus-prime).
 
-- [ ] airflow metrics 노출 (StatsD exporter → prometheus.internal scrape)
-- [ ] Notification + 알람 3종
+- [x] airflow metrics 노출 (2026-05-31, StatsD influxdb → nexus statsd-exporter → prometheus. ops-vm `.env`)
+- [x] 알람 3종 (2026-05-31, nexus alert.rules): scheduler heartbeat 중단 / daily_meta run 실패 / DAG import 에러. 알람→discord(alertmanager).
+  - 워커 오프라인은 호스트 NodeDown(mac 포함)이 커버. `edge_worker.connected` 기반 알람은 api-server 가 statsd 미emit 이라 불가 (`airflow3-learnings.md`)
 
 ## 첫 도메인 워크로드 — lck.pics 데이터 동기화 (2026-05-30)
 
