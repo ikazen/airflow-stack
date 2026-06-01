@@ -16,7 +16,6 @@
 docs/                  설계 / 결정 / 운영 문서
   architecture.md      서비스 배치 + Edge Executor + 인프라 의존
   decisions.md         잠긴 결정 / 재고 가능 / 열린 결정
-  tasks.md             진행 상태 + 방향
   setup.md             셋업 절차
   runbook.md           정상 운영 절차
   troubleshooting.md   문제 진단·해결 사례
@@ -31,9 +30,10 @@ dags/                  DAG entry (sync_matches / sync_secondary / daily_meta + m
 ## 진입점
 
 - 컨벤션: `CLAUDE.md`
-- 결정 / 진행: `docs/decisions.md`, `docs/tasks.md`
+- 결정: `docs/decisions.md`
+- 작업·진행 상태: Linear (가변 작업·백로그·Phase 마일스톤)
 - 셋업: `docs/setup.md`
 
 ## 현재 상태
 
-플랫폼 가동 중. lck.pics 동기화 DAG 3종 운영 중 (`@task.docker`). 진행 상황은 `docs/tasks.md`.
+플랫폼 가동 중. lck.pics 동기화 DAG 3종 운영 중 (`@task.docker`). 진행 상황·백로그는 Linear.

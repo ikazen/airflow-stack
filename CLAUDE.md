@@ -59,6 +59,7 @@ airflow 이미지: `apache-airflow==3.2.x` + edge3 핀만 (thin). 도메인 deps
 
 ## 진입점
 
-- 결정 / 진행: `docs/decisions.md`, `docs/tasks.md`
+- 결정: `docs/decisions.md`
+- 작업·진행 상태·백로그: Linear (가변 작업·Phase 마일스톤). repo↔Linear 매칭은 프로젝트 메모리
 - 셋업 절차: `docs/setup.md`
 - 운영 문제: `docs/troubleshooting.md`
