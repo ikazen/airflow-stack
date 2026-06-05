@@ -32,7 +32,7 @@ _DOCKER_BASE = dict(
         Mount(source="/tmp/rondo-eval", target="/tmp/rondo-eval", type="bind"),
         Mount(source="/var/run/docker.sock", target="/var/run/docker.sock", type="bind"),
     ],
-    queue="default",
+    queue="rondo",
 )
 
 
