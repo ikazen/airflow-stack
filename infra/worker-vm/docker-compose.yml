@@ -5,7 +5,7 @@ services:
       dockerfile: infra/airflow.Dockerfile
     env_file: .env
     network_mode: host
-    command: airflow edge worker --queues default --concurrency 4
+    command: airflow edge worker --queues default --concurrency 2
     # DooD: airflow uid(50000)가 host docker gid에 속해야 socket 접근 가능
     group_add:
       - "${DOCKER_GID}"
