@@ -22,7 +22,6 @@ class DockerOperator(_DockerBase):
 IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
 
 _MOUNTS = [
-    Mount(source="/var/lib/rondo", target="/app/runs", type="bind"),
     Mount(source="/tmp/rondo-eval", target="/tmp/rondo-eval", type="bind"),
     Mount(source="/var/run/docker.sock", target="/var/run/docker.sock", type="bind"),
 ]
@@ -35,6 +34,7 @@ _DOCKER_BASE = dict(
     auto_remove="success",
     mount_tmp_dir=False,
     mounts=_MOUNTS,
+    cpus=1.5,
     queue="default",
 )
 
