@@ -3,6 +3,8 @@
 DAG conf: {competition_id, stage, queue_id}
 1 DAG run = 1 cycle (Strategist → Coder → Evaluator → Reflector).
 daemon이 큐에서 아이템을 꺼내 trigger하고, DAG 완료 후 DB에서 결과를 읽는다.
+
+시크릿은 Airflow Variable로 주입 (var.value.xxx) — .env 마운트 없음.
 """
 from __future__ import annotations
 
@@ -14,9 +16,16 @@ from docker.types import Mount
 
 class DockerOperator(_DockerBase):
     # mounts에 절대경로가 있어 Airflow Jinja FileSystemLoader가 템플릿 파일로 오해함
-    template_fields = ("command",)
+    template_fields = ("command", "environment")
+
 
 IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
+
+_MOUNTS = [
+    Mount(source="/var/lib/rondo", target="/app/runs", type="bind"),
+    Mount(source="/tmp/rondo-eval", target="/tmp/rondo-eval", type="bind"),
+    Mount(source="/var/run/docker.sock", target="/var/run/docker.sock", type="bind"),
+]
 
 _DOCKER_BASE = dict(
     image=IMAGE,
@@ -25,14 +34,8 @@ _DOCKER_BASE = dict(
     network_mode="host",
     auto_remove="success",
     mount_tmp_dir=False,
-    mounts=[
-        Mount(source="/var/lib/rondo", target="/app/runs", type="bind"),
-        Mount(source="/var/lib/rondo/data", target="/app/data", type="bind"),
-        Mount(source="/var/lib/rondo/.env", target="/app/.env", type="bind"),
-        Mount(source="/tmp/rondo-eval", target="/tmp/rondo-eval", type="bind"),
-        Mount(source="/var/run/docker.sock", target="/var/run/docker.sock", type="bind"),
-    ],
-    queue="rondo",
+    mounts=_MOUNTS,
+    queue="default",
 )
 
 
@@ -54,6 +57,19 @@ def reflexion_rondo_cycle() -> None:
             " --stage {{ dag_run.conf['stage'] }}"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
         ),
+        environment={
+            "RONDO_DB_URL":            "{{ var.value.rondo_db_url }}",
+            "OLLAMA_BASE_URL":         "{{ var.value.ollama_base_url }}",
+            "OLLAMA_CLOUD_BASE_URL":   "{{ var.value.ollama_cloud_base_url }}",
+            "OLLAMA_API_KEY":          "{{ var.value.ollama_api_key }}",
+            "MODEL_STRATEGIST":        "{{ var.value.rondo_model_strategist }}",
+            "MODEL_REFLECTOR":         "{{ var.value.rondo_model_reflector }}",
+            "MODEL_CODER":             "{{ var.value.rondo_model_coder }}",
+            "MODEL_EMBEDDING":         "{{ var.value.rondo_model_embedding }}",
+            "MINIO_ENDPOINT":          "{{ var.value.minio_endpoint }}",
+            "MINIO_ACCESS_KEY_ID":     "{{ var.value.minio_access_key_id }}",
+            "MINIO_SECRET_ACCESS_KEY": "{{ var.value.minio_secret_access_key }}",
+        },
         **_DOCKER_BASE,
     )
 
