@@ -8,8 +8,13 @@ from __future__ import annotations
 
 import pendulum
 from airflow.sdk import dag
-from airflow.providers.docker.operators.docker import DockerOperator
+from airflow.providers.docker.operators.docker import DockerOperator as _DockerBase
 from docker.types import Mount
+
+
+class DockerOperator(_DockerBase):
+    # mounts에 절대경로가 있어 Airflow Jinja FileSystemLoader가 템플릿 파일로 오해함
+    template_fields = ("command",)
 
 IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
 
