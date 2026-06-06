@@ -11,20 +11,13 @@ from __future__ import annotations
 import pendulum
 from airflow.sdk import dag
 from airflow.providers.docker.operators.docker import DockerOperator as _DockerBase
-from docker.types import Mount
 
 
 class DockerOperator(_DockerBase):
-    # mounts에 절대경로가 있어 Airflow Jinja FileSystemLoader가 템플릿 파일로 오해함
     template_fields = ("command", "environment")
 
 
 IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
-
-_MOUNTS = [
-    Mount(source="/tmp/rondo-eval", target="/tmp/rondo-eval", type="bind"),
-    Mount(source="/var/run/docker.sock", target="/var/run/docker.sock", type="bind"),
-]
 
 _DOCKER_BASE = dict(
     image=IMAGE,
@@ -33,7 +26,6 @@ _DOCKER_BASE = dict(
     network_mode="host",
     auto_remove="success",
     mount_tmp_dir=False,
-    mounts=_MOUNTS,
     cpus=1.5,
     queue="default",
 )
