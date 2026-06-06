@@ -24,7 +24,6 @@ _DOCKER_BASE = dict(
     force_pull=False,
     docker_url="unix://var/run/docker.sock",
     network_mode="host",
-    dns=["100.100.100.100"],
     auto_remove="success",
     mount_tmp_dir=False,
     cpus=1.5,
@@ -59,6 +58,7 @@ def reflexion_rondo_cycle() -> None:
             "MODEL_REFLECTOR":         "{{ var.value.rondo_model_reflector }}",
             "MODEL_CODER":             "{{ var.value.rondo_model_coder }}",
             "MODEL_EMBEDDING":         "{{ var.value.rondo_model_embedding }}",
+            "MINIO_ENDPOINT":          "{{ var.value.minio_endpoint }}",
         },
         **_DOCKER_BASE,
     )
