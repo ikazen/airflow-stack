@@ -58,6 +58,7 @@ def reflexion_rondo_cycle() -> None:
             "MODEL_REFLECTOR":         "{{ var.value.rondo_model_reflector }}",
             "MODEL_CODER":             "{{ var.value.rondo_model_coder }}",
             "MODEL_EMBEDDING":         "{{ var.value.rondo_model_embedding }}",
+            "MINIO_ENDPOINT":          "{{ var.value.minio_endpoint }}",
         },
         **_DOCKER_BASE,
     )
