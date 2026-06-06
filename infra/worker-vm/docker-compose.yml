@@ -1,19 +1,29 @@
+x-edge-worker: &edge-worker
+  build:
+    context: ../..
+    dockerfile: infra/airflow.Dockerfile
+  env_file: .env
+  network_mode: host
+  # DooD: airflow uid(50000)가 host docker gid에 속해야 socket 접근 가능
+  group_add:
+    - "${DOCKER_GID}"
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
+  restart: unless-stopped
+
+# T-shirt sizing: 한 노드 두 워커. concurrency 는 워커 단위 단일 값이라
+# 사이즈별 cap 차등은 워커 프로세스 분리로만 가능. network_mode: host 라
+# hostname 지시어 충돌 → 워커 이름은 --edge-hostname 으로 지정.
 services:
-  edge-worker:
-    build:
-      context: ../..
-      dockerfile: infra/airflow.Dockerfile
-    env_file: .env
-    network_mode: host
-    command: airflow edge worker --queues default --concurrency 2
-    # DooD: airflow uid(50000)가 host docker gid에 속해야 socket 접근 가능
-    group_add:
-      - "${DOCKER_GID}"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "3"
-    restart: unless-stopped
+  edge-worker-default:
+    <<: *edge-worker
+    command: airflow edge worker --queues default --concurrency 2 --edge-hostname worker-vm-default
+
+  edge-worker-big:
+    <<: *edge-worker
+    command: airflow edge worker --queues big --concurrency 1 --edge-hostname worker-vm-big

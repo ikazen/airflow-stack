@@ -28,8 +28,14 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 
 ## Queue
 
-- `default` (worker-vm) — 미지정 task 의 기본
-- `gpu` (M1, intermittent) — GPU / Neural Engine 필요 시 명시 지정. M1 가용성 가정 금지. mac-server 는 `gpu,default` 둘 다 구독 (가용 시 default task 도 흡수)
+T-shirt sizing — 노드 내 사이즈별 cap 차등은 워커 프로세스 분리로만 (edge3 concurrency 는 워커 단위 단일 값, per-queue 설정 없음). 사이즈 = admission(슬롯 수), 실제 리소스 상한은 `@task.docker` `mem_limit`/`cpus` 로 세트. 결정 R5.
+
+- `default` — small 티어 = 미지정 task 의 기본. worker-vm(c=2) + mac-server(c=8) 워커가 구독
+- `big` — heavy task 명시 opt-in (`queue="big"`). worker-vm(c=1) + mac-server big 워커가 구독
+- `gpu` (M1, intermittent) — GPU / Neural Engine 필요 시 명시. M1 가용성 가정 금지. mac-server big 워커가 `gpu,big` 공유 구독(c=4) → GPU=heavy 라 big cap 공유
+- `ops` — ops-vm 전용 (컨트롤 플레인 잡)
+
+한 노드 두 워커 = 워커 이름 충돌 → `--edge-hostname` 으로 distinct 지정 (`<node>-default` / `<node>-big`).
 
 ## 네트워크
 

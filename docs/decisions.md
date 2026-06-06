@@ -26,6 +26,7 @@ Airflow workload 결정. 인프라 결정은 `nexus-prime:docs/decisions.md`.
 | R2 | 코드 배포 — DAG 파일 = L27 (GitDagBundle), task body = L24 (`@task.docker` image, sha-pinned) | 둘 다 확정 (2026-05-30) | task image 빌드·push 자동화는 GitHub Actions → `registry.internal` 로 자연 확장 |
 | R3 | Auth manager — `SimpleAuthManager` (Airflow 3 기본) | 다중 사용자 / RBAC, 또는 UI 노출 표면 확대 | `FabAuthManager` 전환 |
 | R4 | Triggerer — ops-vm 컨테이너로 추가 (2026-05-30) | 향후 deferrable 사용 가능성 | — |
+| R5 | **T-shirt sizing — 노드 내 워커 분리 (default/big)** (2026-06-06). edge3 concurrency 는 워커 단위 단일 값·per-queue 설정 없음 → 사이즈별 cap 차등은 워커 프로세스 분리로만. worker-vm: `default`(c=2)/`big`(c=1). mac-server: `default`(c=8)/`big`=`gpu,big`(c=4, GPU=heavy 라 묶음). 워커 이름 `--edge-hostname` distinct | task 리소스 footprint 변화·노드 RAM 압박·사이즈 티어 추가(예: medium) 필요 시 | concurrency 값 조정 / 큐 추가. cap=admission 일 뿐, 실제 상한은 `@task.docker mem_limit`/`cpus` 세트 |
 
 R3 주의: SimpleAuthManager 는 Apache 공식 문서가 "dev/test 전용, production 비권장" 으로 명시. 단일 사용자 + 공개 표면 최소화 (nexus-prime L11 — edge API 비공개) 전제로 v1 채택. UI 노출 확대 시 R3 즉시 재고.
 
