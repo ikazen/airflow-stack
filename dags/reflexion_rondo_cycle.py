@@ -22,13 +22,13 @@ IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
 
 _DOCKER_BASE = dict(
     image=IMAGE,
-    force_pull=False,
+    force_pull=True,
     docker_url="unix://var/run/docker.sock",
     network_mode="host",
     auto_remove="success",
     mount_tmp_dir=False,
     cpus=1.5,
-    queue="default",
+    queue="big",
 )
 
 _ENV = {
