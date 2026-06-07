@@ -22,7 +22,7 @@ x-edge-worker: &edge-worker
 services:
   edge-worker-default:
     <<: *edge-worker
-    command: airflow edge worker --queues default --concurrency 2 --edge-hostname worker-vm-default
+    command: airflow edge worker --queues default --concurrency 2 --edge-hostname worker-vm
 
   edge-worker-big:
     <<: *edge-worker

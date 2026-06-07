@@ -27,8 +27,8 @@ x-edge-worker: &edge-worker
 services:
   edge-worker-default:
     <<: *edge-worker
-    command: airflow edge worker --queues default --concurrency 8 --edge-hostname mac-default
+    command: airflow edge worker --queues default --concurrency 8 --edge-hostname mac-server
 
   edge-worker-big:
     <<: *edge-worker
-    command: airflow edge worker --queues gpu,big --concurrency 4 --edge-hostname mac-big
+    command: airflow edge worker --queues gpu,big --concurrency 4 --edge-hostname mac-server-big
