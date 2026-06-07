@@ -36,10 +36,6 @@ _ENV = {
     "OLLAMA_BASE_URL":         "{{ var.value.ollama_base_url }}",
     "OLLAMA_CLOUD_BASE_URL":   "{{ var.value.ollama_cloud_base_url }}",
     "OLLAMA_API_KEY":          "{{ var.value.ollama_api_key }}",
-    "MODEL_STRATEGIST":        "{{ var.value.rondo_model_strategist }}",
-    "MODEL_REFLECTOR":         "{{ var.value.rondo_model_reflector }}",
-    "MODEL_CODER":             "{{ var.value.rondo_model_coder }}",
-    "MODEL_EMBEDDING":         "{{ var.value.rondo_model_embedding }}",
     "MINIO_ENDPOINT":          "{{ var.value.minio_endpoint }}",
 }
 
