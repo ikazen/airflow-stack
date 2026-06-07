@@ -69,6 +69,7 @@ def reflexion_rondo_cycle() -> None:
                 " --competition {{ dag_run.conf['competition_id'] }}"
                 " --stage {{ dag_run.conf['stage'] }}"
                 " --queue-id {{ dag_run.conf['queue_id'] }}"
+                f" --attempt-index {i}"
             ),
             environment=_ENV,
             **_DOCKER_BASE,
