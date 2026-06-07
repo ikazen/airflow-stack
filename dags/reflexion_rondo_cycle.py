@@ -18,11 +18,11 @@ class DockerOperator(_DockerBase):
     template_fields = ("command", "environment")
 
 
-IMAGE = "registry.internal:80/reflexion-rondo/daemon:latest"
+IMAGE = "registry.internal:80/reflexion-rondo/daemon:a54fca8"
 
 _DOCKER_BASE = dict(
     image=IMAGE,
-    force_pull=True,
+    force_pull=False,
     docker_url="unix://var/run/docker.sock",
     network_mode="host",
     auto_remove="success",
