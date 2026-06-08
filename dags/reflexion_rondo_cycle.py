@@ -27,9 +27,10 @@ _DOCKER_BASE = dict(
     network_mode="host",
     auto_remove="success",
     mount_tmp_dir=False,
-    cpus=1.5,
-    queue="big",
 )
+
+_DOCKER_LIGHT = dict(**_DOCKER_BASE, queue="default", cpus=0.5)
+_DOCKER_HEAVY = dict(**_DOCKER_BASE, queue="big", cpus=1.5)
 
 _ENV = {
     "RONDO_DB_URL":            "{{ var.value.rondo_db_url }}",
@@ -58,7 +59,7 @@ def reflexion_rondo_cycle() -> None:
             " --queue-id {{ dag_run.conf['queue_id'] }}"
         ),
         environment=_ENV,
-        **_DOCKER_BASE,
+        **_DOCKER_LIGHT,
     )
 
     attempts = [
@@ -72,7 +73,7 @@ def reflexion_rondo_cycle() -> None:
                 f" --attempt-index {i}"
             ),
             environment=_ENV,
-            **_DOCKER_BASE,
+            **_DOCKER_HEAVY,
         )
         for i in range(3)
     ]
@@ -84,7 +85,7 @@ def reflexion_rondo_cycle() -> None:
             " --queue-id {{ dag_run.conf['queue_id'] }}"
         ),
         environment=_ENV,
-        **_DOCKER_BASE,
+        **_DOCKER_LIGHT,
     )
 
     retrieve >> attempts >> promote
