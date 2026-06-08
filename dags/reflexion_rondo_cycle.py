@@ -18,7 +18,7 @@ class DockerOperator(_DockerBase):
     template_fields = ("command", "environment")
 
 
-IMAGE = "registry.internal:80/reflexion-rondo/daemon:0734a4b"
+IMAGE = "registry.internal:80/reflexion-rondo/daemon:258e708"
 
 _DOCKER_BASE = dict(
     image=IMAGE,
@@ -33,6 +33,7 @@ _DOCKER_LIGHT = dict(**_DOCKER_BASE, queue="default", cpus=0.5)
 _DOCKER_HEAVY = dict(**_DOCKER_BASE, queue="big", cpus=1.5)
 
 _ENV = {
+    "PYTHONUNBUFFERED":        "1",
     "RONDO_DB_URL":            "{{ var.value.rondo_db_url }}",
     "OLLAMA_BASE_URL":         "{{ var.value.ollama_base_url }}",
     "OLLAMA_CLOUD_BASE_URL":   "{{ var.value.ollama_cloud_base_url }}",
