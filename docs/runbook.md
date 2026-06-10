@@ -27,7 +27,21 @@ PostgreSQL 15+ 는 public 스키마 CREATE 권한이 기본 미포함 — 아래
 docker exec -it postgres psql -U postgres -d airflow -c "GRANT ALL ON SCHEMA public TO airflow;"
 ```
 
-Airflow Variables / Connections 는 미사용 — task 자격증명은 워커 `.env` → `@task.docker` 컨테이너 env 주입. 메타 DB 에 코드 아닌 상태 없음 (disposable, `decisions.md` L10).
+Airflow Variables 로 task 자격증명 주입 (Connections 미사용). `airflow-variables.json` 참조 (gitignore 됨).
+
+현재 사용 중인 Variables:
+
+| key | 용도 |
+|---|---|
+| `db_url` | lck-pics Supabase URL |
+| `db_key` | lck-pics Supabase service role key |
+| `rondo_db_url` | reflexion-rondo DB URL |
+| `ollama_base_url` | Ollama API 엔드포인트 |
+| `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 |
+| `ollama_api_key` | Ollama API key |
+| `minio_endpoint` | MinIO S3 엔드포인트 |
+
+Variables 는 UI (Admin → Variables) 또는 `airflow-variables.json` import 로 복구. 메타 DB 손실 시 `airflow-variables.json` (로컬 백업) 에서 재import.
 
 ## 코드 배포
 
@@ -53,6 +67,8 @@ docker compose -f infra/<host>/docker-compose.yml start <edge-worker-service>
 ```
 
 정상 신호 = 로그 `No new job to process`. 확인 = `airflow edge list-workers` (전 워커 idle). 안 건드린 워커의 등록은 삭제 금지 (그 워커도 충돌남).
+
+mac-server compose 에 drain 설정이 박혀 있어 (`DRAIN_TIMEOUT_SEC=10`, `DRAIN_KILL_GRACE_SEC=5`, `stop_grace_period: 30s`) force-recreate 시 ~15s 안에 OFFLINE 등록 완료 — 이 값은 수정하지 말 것 (`airflow3-learnings.md` sleep/wake 섹션 참조).
 
 ## 메타 DB 정리 (db clean) — host-level, 수동
 

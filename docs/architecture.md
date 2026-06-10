@@ -6,9 +6,11 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 
 | 호스트 | airflow 서비스 |
 |---|---|
-| ops-vm | api-server / scheduler / dag-processor / edge-worker-ops (`ops` queue 전용) |
-| worker-vm | edge-worker (`default` queue) |
-| mac-server | edge-worker (`gpu,default` queue) |
+| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops (`ops` c=2) |
+| worker-vm | edge-worker-default (`default` c=2, `--edge-hostname worker-vm`) / edge-worker-big (`big` c=1, `--edge-hostname worker-vm-big`) |
+| mac-server | edge-worker-default (`default` c=8, `--edge-hostname mac-server`) / edge-worker-big (`gpu,big` c=4, `--edge-hostname mac-server-big`) |
+
+한 노드에 두 워커 (T-shirt sizing, `decisions.md` R5). edge3 concurrency 는 워커 단위 단일 값이라 사이즈별 cap 차등은 워커 프로세스 분리로만. `network_mode: host` 라 hostname 지시어 충돌 → `--edge-hostname` 으로 워커 이름 구분.
 
 호스트·네트워크 토폴로지·OCI 자원·Tailscale 메쉬는 `nexus-prime:docs/architecture.md`.
 
@@ -17,15 +19,60 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 - 워커 → ops-vm = **HTTPS long-poll 한 채널만**. DB / Redis 접근 0
 - Task SDK 가 모든 상태를 api-server 경유
 - NAT 뒤 M1 도 outbound 만으로 동작 (broker 없음)
-- JWT: 공유 `EDGE__JWT_SECRET` (HMAC). 워커가 그 시크릿으로 자체 서명한 토큰 제시 — api-server 발행 토큰 아님
+- JWT: 공유 `AIRFLOW__API_AUTH__JWT_SECRET` (HMAC). 워커가 자체 서명한 토큰 제시 — api-server 발행 토큰 아님
 
 ## Queue
 
-| queue | 구독 worker | 라우팅 |
+| queue | 구독 worker | concurrency | 라우팅 |
+|---|---|---|---|
+| `default` | worker-vm / mac-server | vm=2, mac=8 | 미지정 task 의 기본 |
+| `big` | worker-vm-big / mac-server-big | vm=1, mac=4 | heavy task 명시 opt-in (`queue="big"`) |
+| `gpu` | mac-server-big (`gpu,big` 공동 구독) | 4 (big 공유) | `queue="gpu"` 명시. GPU / Neural Engine. M1 가용성 가정 금지 |
+| `ops` | ops-vm | 2 | control-plane 작업 전용 (ops-vm 은 `default` 미구독) |
+
+cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limit`/`cpus` 로 별도 세트.
+
+## DAG 목록
+
+### lck-pics 데이터 동기화
+
+| DAG | 스케줄 | queue | 비고 |
+|---|---|---|---|
+| `sync_matches` | `*/10 * * * *` | default | `max_active_runs=1`, `exec_timeout=5m` |
+| `sync_secondary` | `*/15 * * * *` | default | `max_active_runs=1`, `exec_timeout=5m` |
+| `daily_meta` | `0 0 * * *` (KST) | default | `retries=2`, `exec_timeout=10m`. leagues → [matches, secondary] → report |
+
+세 DAG 모두 `dags/data_sync_common.py` 의 `IMAGE` 공유 (sha-pinned). Airflow Variables `db_url`·`db_key` 로 자격증명 주입.
+
+### reflexion-rondo
+
+| DAG | 스케줄 | 비고 |
 |---|---|---|
-| `default` | worker-vm · mac-server | 미지정 task 의 기본 |
-| `ops` | ops-vm | control-plane 작업 전용 (ops-vm 은 `default` 미구독 — 컨트롤 플레인 자원 보호) |
-| `gpu` | mac-server | `queue="gpu"` 명시. GPU / Neural Engine 활용. M1 가용성 가정 금지 |
+| `reflexion_rondo_cycle` | `None` (daemon이 trigger) | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
+
+retrieve(default) → attempt_0/1/2(big) → promote(default). Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
+
+### 운영
+
+| DAG | 스케줄 | queue | 비고 |
+|---|---|---|---|
+| `maintenance` | `0 6 * * 3` (KST) | ops | 로그 14일 보존. 로그 볼륨이 ops-vm 에 있어 `queue="ops"` 필수 |
+| `test_environment` | None (수동) | ops/default/gpu | 3 노드 환경 확인 |
+
+## `@task.docker` DooD 패턴
+
+워크로드 task 는 DooD(Docker-out-of-Docker) 컨테이너에서 실행. 공통 설정:
+
+```python
+docker_url="unix://var/run/docker.sock"
+network_mode="bridge"          # rondo 는 "host"
+auto_remove="success"          # 비정상 종료 시 컨테이너 잔류 가능
+mount_tmp_dir=False            # 워커-host 파일시스템이 달라 tmp mount 깨짐
+force_pull=False               # sha-pinned 이미지 캐시 hit
+```
+
+- task-sdk 를 task image 에 넣지 말 것 — DooD 환경에서 comms reinit fd 에러로 즉사
+- `execution_timeout` 필수 — httpx/supabase 미종료 시 프로세스 hang 방지
 
 ## DAG processor 분리 (L15)
 
