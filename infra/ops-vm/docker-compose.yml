@@ -1,3 +1,5 @@
+name: airflow
+
 services:
   airflow-init:
     build:
