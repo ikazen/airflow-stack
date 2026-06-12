@@ -54,7 +54,7 @@ def reflexion_rondo_cycle() -> None:
     retrieve = DockerOperator(
         task_id="retrieve",
         command=(
-            "uv run python -m bin.run_retrieve_task"
+            "uv run --no-sync python -m bin.run_retrieve_task"
             " --competition {{ dag_run.conf['competition_id'] }}"
             " --stage {{ dag_run.conf['stage'] }}"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
@@ -67,7 +67,7 @@ def reflexion_rondo_cycle() -> None:
         DockerOperator(
             task_id=f"attempt_{i}",
             command=(
-                "uv run python -m bin.run_attempt_task"
+                "uv run --no-sync python -m bin.run_attempt_task"
                 " --competition {{ dag_run.conf['competition_id'] }}"
                 " --stage {{ dag_run.conf['stage'] }}"
                 " --queue-id {{ dag_run.conf['queue_id'] }}"
@@ -82,7 +82,7 @@ def reflexion_rondo_cycle() -> None:
     promote = DockerOperator(
         task_id="promote",
         command=(
-            "uv run python -m bin.run_promote_task"
+            "uv run --no-sync python -m bin.run_promote_task"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
         ),
         environment=_ENV,
