@@ -12,7 +12,9 @@ import urllib.request
 from datetime import timedelta
 
 import pendulum
-from airflow.sdk import Variable, dag, task
+from airflow.sdk import dag, task
+
+_RONDO_API_URL = "http://rondo-api.internal"
 
 
 @dag(
@@ -26,8 +28,7 @@ from airflow.sdk import Variable, dag, task
 def reflexion_rondo_autosubmit() -> None:
     @task(queue="ops", retries=1, execution_timeout=timedelta(minutes=5))
     def trigger_auto_submit() -> None:
-        base_url = Variable.get("rondo_api_url", default_var="http://rondo-api.internal")
-        url = f"{base_url.rstrip('/')}/api/submissions/auto"
+        url = f"{_RONDO_API_URL}/api/submissions/auto"
         payload = json.dumps({"window_hours": 24}).encode()
 
         req = urllib.request.Request(
