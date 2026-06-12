@@ -3,7 +3,7 @@
 매일 KST 06:00 실행. 최근 24h 내 cycle이 돈 대회 중
 직전 제출 이후 best CV가 개선된 대회만 daemon API를 통해 제출한다.
 
-daemon API: http://rondo.internal:8000 (Airflow Variable: rondo_api_url)
+daemon API: http://rondo-api.internal (Airflow Variable: rondo_api_url)
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from airflow.sdk import Variable, dag, task
 def reflexion_rondo_autosubmit() -> None:
     @task(queue="ops", retries=1, execution_timeout=timedelta(minutes=5))
     def trigger_auto_submit() -> None:
-        base_url = Variable.get("rondo_api_url", default_var="http://rondo.internal:8000")
+        base_url = Variable.get("rondo_api_url", default_var="http://rondo-api.internal")
         url = f"{base_url.rstrip('/')}/api/submissions/auto"
         payload = json.dumps({"window_hours": 24}).encode()
 

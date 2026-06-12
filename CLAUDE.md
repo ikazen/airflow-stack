@@ -168,7 +168,7 @@ class DockerOperator(_DockerBase):
 | `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 | reflexion_rondo_cycle |
 | `ollama_api_key` | Ollama API key | reflexion_rondo_cycle |
 | `minio_endpoint` | MinIO S3 엔드포인트 | reflexion_rondo_cycle |
-| `rondo_api_url` | daemon FastAPI 주소 (기본 `http://rondo.internal:8000`) | reflexion_rondo_autosubmit |
+| `rondo_api_url` | daemon FastAPI 주소 (기본 `http://rondo-api.internal`) | reflexion_rondo_autosubmit |
 
 ---
 
