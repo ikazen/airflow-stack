@@ -18,7 +18,7 @@ class DockerOperator(_DockerBase):
     template_fields = ("command", "environment")
 
 
-IMAGE = "registry.internal:5000/reflexion-rondo/task:v1.1.3"
+IMAGE = "registry.internal:5000/reflexion-rondo/task:v1.1.4"
 
 _DOCKER_BASE = dict(
     image=IMAGE,
