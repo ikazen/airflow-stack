@@ -4,7 +4,7 @@
 
 배치: OCI ARM 2대 (ops-vm 컨트롤 플레인 + worker-vm 안정 워커) + M1 (mac-server burst 워커). Edge Executor 기반.
 
-도메인 워크로드 = lck.pics 데이터 동기화 (`sync_matches` / `sync_secondary` / `daily_meta`) + 운영 DAG (`maintenance` / `test_environment`). DAG 배포는 GitDagBundle (`git push` → Airflow 가 repo 에서 fetch), task 로직은 `@task.docker` 이미지 (`CLAUDE.md` 코드 배포).
+도메인 워크로드 = lck.pics 데이터 동기화 (`sync_matches` / `sync_secondary` / `daily_meta`) + reflexion-rondo AI 평가 루프 (`reflexion_rondo_cycle` / `reflexion_rondo_autosubmit`) + 운영 DAG (`maintenance` / `test_environment`). DAG 배포는 GitDagBundle (`git push` → Airflow 가 repo 에서 fetch), task 로직은 `@task.docker` 이미지 (`CLAUDE.md` 코드 배포).
 
 ## 공개 repo 정책
 

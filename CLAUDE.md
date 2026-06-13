@@ -168,6 +168,12 @@ class DockerOperator(_DockerBase):
 | `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 | reflexion_rondo_cycle |
 | `ollama_api_key` | Ollama API key | reflexion_rondo_cycle |
 | `minio_endpoint` | MinIO S3 엔드포인트 | reflexion_rondo_cycle |
+| `minio_access_key_id` | MinIO access key | reflexion_rondo_cycle |
+| `minio_secret_access_key` | MinIO secret key | reflexion_rondo_cycle |
+| `rondo_model_coder` | rondo task image 내 coder LLM 모델명 | reflexion_rondo_cycle |
+| `rondo_model_strategist` | rondo task image 내 strategist LLM 모델명 | reflexion_rondo_cycle |
+| `rondo_model_reflector` | rondo task image 내 reflector LLM 모델명 | reflexion_rondo_cycle |
+| `rondo_model_embedding` | rondo task image 내 embedding 모델명 | reflexion_rondo_cycle |
 
 ---
 
@@ -220,7 +226,7 @@ api-server(uvicorn) 는 StatsD 클라이언트를 init 안 함 → `edge_worker.
 
 airflow 이미지: `apache-airflow==3.2.x` + edge3/git/docker provider 핀. 도메인 deps 는 `@task.docker` task 이미지에. constraints:
 ```
-https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt
+https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.13.txt
 ```
 
 ---

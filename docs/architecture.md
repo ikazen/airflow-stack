@@ -46,11 +46,14 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 
 ### reflexion-rondo
 
-| DAG | 스케줄 | 비고 |
-|---|---|---|
-| `reflexion_rondo_cycle` | `None` (daemon이 trigger) | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
+| DAG | 스케줄 | queue | 비고 |
+|---|---|---|---|
+| `reflexion_rondo_cycle` | `None` (daemon이 trigger) | default/big | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
+| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops | `max_active_runs=1`, `retries=1`, `exec_timeout=5m`. best CV 개선 시만 Kaggle 자동 제출 |
 
-retrieve(default) → attempt_0/1/2(big) → promote(default). Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
+`reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big) → promote(default). Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
+
+`reflexion_rondo_autosubmit`: Docker 없음. daemon `POST /api/submissions/auto` 직접 HTTP 호출 (`http://rondo-api.internal` 하드코딩).
 
 ### 운영
 

@@ -3,7 +3,7 @@
 매일 KST 06:00 실행. 최근 24h 내 cycle이 돈 대회 중
 직전 제출 이후 best CV가 개선된 대회만 daemon API를 통해 제출한다.
 
-daemon API: http://rondo-api.internal (Airflow Variable: rondo_api_url)
+daemon API: http://rondo-api.internal (하드코딩: _RONDO_API_URL)
 """
 from __future__ import annotations
 

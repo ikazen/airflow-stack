@@ -88,5 +88,5 @@ brew install sleepwatcher && brew services start sleepwatcher   # -w ~/.wakeup
 
 ```
 uv pip compile requirements.in -o requirements.txt \
-  -c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.12.txt
+  -c https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3.13.txt
 ```

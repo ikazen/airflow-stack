@@ -40,6 +40,12 @@ Airflow Variables 로 task 자격증명 주입 (Connections 미사용). `airflow
 | `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 |
 | `ollama_api_key` | Ollama API key |
 | `minio_endpoint` | MinIO S3 엔드포인트 |
+| `minio_access_key_id` | MinIO access key |
+| `minio_secret_access_key` | MinIO secret key |
+| `rondo_model_coder` | rondo coder LLM 모델명 |
+| `rondo_model_strategist` | rondo strategist LLM 모델명 |
+| `rondo_model_reflector` | rondo reflector LLM 모델명 |
+| `rondo_model_embedding` | rondo embedding 모델명 |
 
 Variables 는 UI (Admin → Variables) 또는 `airflow-variables.json` import 로 복구. 메타 DB 손실 시 `airflow-variables.json` (로컬 백업) 에서 재import.
 
