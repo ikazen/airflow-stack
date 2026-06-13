@@ -89,13 +89,13 @@ bundle config key (`AIRFLOW__DAG_PROCESSOR__DAG_BUNDLE_CONFIG_LIST`):
 
 ### task body (`@task.docker` image)
 
-1. `registry.internal:80/<namespace>/<name>:<sha>` 로 빌드·push
+1. `registry.internal:5000/<namespace>/<name>:<sha>` 로 빌드·push
 2. DAG 의 image 태그(sha) 를 새 값으로 갱신 → `git push`
 3. 워커가 다음 task 실행 시 `force_pull=False` 로 sha-pinned 이미지 사용 (노드 당 sha 당 1회 pull)
 
 image sha 변경 단일 위치:
-- `dags/data_sync_common.py` — `IMAGE = "registry.internal:80/..."` (sync 3종 DAG 공유)
-- `dags/reflexion_rondo_cycle.py` — `IMAGE = "registry.internal:80/..."` (인라인)
+- `dags/data_sync_common.py` — `IMAGE = "registry.internal:5000/..."` (sync 3종 DAG 공유)
+- `dags/reflexion_rondo_cycle.py` — `IMAGE = "registry.internal:5000/..."` (인라인)
 
 ### 인프라 변경 (compose / Dockerfile / `.env`)
 
