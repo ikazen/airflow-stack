@@ -90,8 +90,29 @@ docker compose -f ~/projects/airflow-stack/infra/ops-vm/docker-compose.yml exec 
 
 현재 **수동/필요 시**. 메타 DB 가 disposable·소형(~11MB, 워크로드 없어 거의 안 늘어남)이라 상시 불필요(YAGNI). 고volume 워크로드 도입으로 실제 누적되면 systemd timer + 모니터링(systemd `OnFailure` 알림, 또는 node_exporter textfile → `prometheus.internal` staleness alert)으로 자동화 — 그때 결정.
 
+## 상태 점검 (Claude / 자동화용)
+
+점검 도구는 Airflow REST API (api-server) + rondo DB 직접 조회 2가지. 설정값은 로컬 `~/.config/claude/ops-status.env` (600, repo 밖) 에만 — 실제 값·host는 여기 기록 안 함.
+
+### Airflow API (인증 불필요/필요 혼재)
+
+| 항목 | 엔드포인트 |
+|---|---|
+| 헬스 (인증 불필요) | `GET /api/v2/monitor/health` |
+| DAG Run 목록 | `GET /api/v2/dags/~/dagRuns?order_by=-start_date&limit=20` |
+| 실패 task | `GET /api/v2/dags/~/dagRuns/~/taskInstances?state=failed` |
+| DAG 파싱 오류 | `GET /api/v2/importErrors` |
+| Task 로그 | `GET /api/v2/dags/{dag_id}/dagRuns/{run_id}/taskInstances/{task_id}/logs/{try_number}` |
+
+토큰: `POST /auth/token` `{"username": "...", "password": "..."}` → `access_token` (HMAC, 매 호출 시 재발급).
+
+### rondo DB (read-only)
+
+API 없음 → psql/psycopg 직접. role `ro_claude` (`pg_read_all_data` 부여, ops-vm Postgres).
+접속: ops-status.env 의 `RONDO_DB_URL`.
+주요 테이블: `raw.attempts`, `raw.competitions`, `raw.cycle_queue`, `raw.kaggle_submissions`.
+
 ## 작성 예정
 
-- 일상 헬스 체크 (api-server / scheduler / dag-processor / Edge Workers)
 - Secrets 회전 (Fernet / JWT — Postgres pw 는 nexus-prime)
 - 인스턴스 / 메타 손실 시 재배포 복구 (백업 없음 — nexus-prime L7)

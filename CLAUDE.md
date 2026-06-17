@@ -136,7 +136,7 @@ force_pull=False
 시크릿은 `.env` 마운트 없이 Airflow Variable 로 주입: `rondo_db_url`, `ollama_base_url`, `ollama_cloud_base_url`, `ollama_api_key`, `minio_endpoint`.
 
 `reflexion_rondo_autosubmit`: 최근 24h cycle 실행 대회 중 best CV 개선 시에만 Kaggle 자동 제출.
-daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-api.internal` 하드코딩).
+daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
 
 DockerOperator 를 직접 사용 (템플릿이 필요해 `@task.docker` 대신):
 ```python
