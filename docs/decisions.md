@@ -17,6 +17,7 @@ Airflow workload 결정. 인프라 결정은 `nexus-prime:docs/decisions.md`.
 | L24 | **워크로드 task 의 기본 = `@task.docker`** (별도 컨테이너, DooD). 워커 = thin runtime | 운용 (scheduler·worker) ↔ 실행 (task body) 환경 분리. 라이브러리·숨길 로직은 task 이미지에. 노드별 환경 매트릭스 = task image 단위. DooD 보안 implication 은 신뢰 self-host 전제 (2026-05-30 표준 확정) |
 | L26 | task image 태그 = sha-pinned, `force_pull=False` | k8s `IfNotPresent` 등가. immutable tag = 캐시 hit 안전, mutable tag 비결정성 회피. 노드별 sha 당 1 회 pull |
 | L27 | DAG 배포 = **GitDagBundle** (`apache-airflow-providers-git`), public repo `repo_url` 직접 (connection 없음) | Airflow 3 네이티브 DAG 분배 — dag-processor·워커가 repo 에서 `dags/` 직접 fetch. `git push` 가 곧 배포 (호스트 per-node pull 불필요). DAG Versioning(DagRun↔commit pin) 활성. Connection 미사용 = 메타 DB disposable (L10) 유지 |
+| L28 | **ops 큐 = privileged 인프라 유지보수 전용**. `docker.sock` (호스트 docker root) 을 ops-vm 워커에 마운트 → 일반 워크로드 라우팅 금지로 blast radius 한정. registry retention+GC / build cache prune 을 systemd 타이머 → Airflow DAG 로 이전 (UI 가시성·재시도 확보). | nexus-prime `decisions.md` L21, `review-2026-06-18.md` F5 |
 
 ## 재고 가능 결정
 

@@ -22,7 +22,7 @@ Airflow 3.2.x self-host. Claude 세션 컨벤션. 사용자 글로벌 `~/.claude
 
 | 호스트 | 역할 | compose 파일 |
 |---|---|---|
-| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops(`ops` c=2) | `infra/ops-vm/docker-compose.yml` |
+| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops(`ops` c=2, docker.sock 마운트) | `infra/ops-vm/docker-compose.yml` |
 | worker-vm | edge-worker-default(`default` c=2) / edge-worker-big(`big` c=1) | `infra/worker-vm/docker-compose.yml` |
 | mac-server | edge-worker-default(`default` c=8) / edge-worker-big(`gpu,big` c=4) | `infra/mac-server/docker-compose.yml` |
 
@@ -60,12 +60,12 @@ stop_grace_period: 30s
 
 T-shirt sizing. edge3 concurrency 는 워커 단위 단일 값 (per-queue 설정 없음) → 사이즈별 cap 차등은 워커 프로세스 분리로만. cap = admission(슬롯 수), 실제 리소스 상한은 `@task.docker` `mem_limit`/`cpus` 로 세트.
 
-| queue | 구독 worker | concurrency |
-|---|---|---|
-| `default` | worker-vm-default, mac-server-default | vm=2, mac=8 |
-| `big` | worker-vm-big, mac-server-big | vm=1, mac=4(gpu공유) |
-| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 4(big 공유) |
-| `ops` | ops-vm edge-worker-ops | 2 |
+| queue | 구독 worker | concurrency | 비고 |
+|---|---|---|---|
+| `default` | worker-vm-default, mac-server-default | vm=2, mac=8 | |
+| `big` | worker-vm-big, mac-server-big | vm=1, mac=4(gpu공유) | |
+| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 4(big 공유) | |
+| `ops` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
 
 `--edge-hostname` 으로 워커 이름 구분 (한 노드 두 워커 → 이름 충돌 방지):
 - worker-vm: `worker-vm` / `worker-vm-big`
@@ -149,6 +149,7 @@ class DockerOperator(_DockerBase):
 | DAG | 스케줄 | queue | 비고 |
 |---|---|---|---|
 | `maintenance` | `0 6 * * 3` (수요일 KST 06:00) | ops | 로그 볼륨이 ops-vm 에 있어 반드시 `queue="ops"` |
+| `registry_maintenance` | `0 4 * * *` (매일 KST 04:00) | ops | docker.sock DooD — registry retention+GC + build cache prune. ops 큐 전용 (decisions L28) |
 | `test_environment` | `None` (수동) | ops/default/gpu | 3 노드 환경 확인용 |
 
 `maintenance` 는 `LOG_DIR=/opt/airflow/logs` 하위 `.log` 파일 14일 초과분 삭제. `db clean` 은 task 불가 (Task SDK DB 접근 없음) → `runbook.md` 참조.
