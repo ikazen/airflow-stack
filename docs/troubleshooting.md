@@ -4,6 +4,22 @@
 
 각 항목: 증상 / 진단 명령·로그 / 원인 / 해결 / 재발 방지.
 
+## api-server 재기동 시 로그인 초기화 (세션 쿠키 무효)
+
+**증상**: api-server recreate / restart 후 브라우저에서 로그아웃됨. 비밀번호는 맞는데 로그인하면 바로 또 초기화.
+
+**원인**: `AIRFLOW__API__SECRET_KEY` 미설정. Airflow 3 api-server(FastAPI)는 `[api] secret_key` 로 세션 쿠키 서명. `[webserver] secret_key` 는 deprecated → 무시. 값이 없으면 **기동마다 무작위 생성** → 재기동마다 기존 쿠키 전부 무효.
+
+**해결**: `infra/ops-vm/.env` 에 `AIRFLOW__API__SECRET_KEY=<고정값>` 추가 후 api-server recreate.
+```bash
+# .env 수정: AIRFLOW__WEBSERVER__SECRET_KEY → AIRFLOW__API__SECRET_KEY (키 이름만 교체, 값 재사용)
+docker compose -f infra/ops-vm/docker-compose.yml up -d api-server
+```
+
+**재발 방지**: `.env.example` 의 `AIRFLOW__API__SECRET_KEY` 항목이 정답. 환경 복원 시 옛 키 이름(`AIRFLOW__WEBSERVER__SECRET_KEY`) 쓰지 말 것.
+
+---
+
 ## mac-server sleep 후 task 좀비 + worker wedge
 
 **증상**: mac sleep 중이던 task 가 깨어나도 UI 에서 영원히 `running`. 로그 안 뜸. worker 는 `No new job to process, N still running` 만 반복하며 새 job 안 받음.

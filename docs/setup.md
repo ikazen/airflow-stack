@@ -27,7 +27,7 @@ docker compose -f infra/ops-vm/docker-compose.yml up -d
 서비스: `airflow-init` (1 회, `airflow db migrate`) → `api-server` / `scheduler` / `dag-processor` / `edge-worker-ops`.
 
 검증:
-- `https://airflow.<your-domain>` 로그인 (admin 비번 = `docker exec api-server cat .../simple_auth_manager_passwords.json.generated`)
+- `https://airflow.<your-domain>` 로그인 (admin 비번 = ops-vm `~/airflow-local/passwords.json` 의 `admin` 값)
 - UI Edge Workers 탭 — `ops-vm` healthy
 
 ## 3. worker-vm — stable worker
