@@ -4,6 +4,24 @@
 
 각 항목: 증상 / 진단 명령·로그 / 원인 / 해결 / 재발 방지.
 
+## 로그인 페이지 사라짐 (인증 bypass)
+
+**증상**: UI 접근 시 로그인 없이 바로 진입. 세션 개념 자체가 사라진 것처럼 보임.
+
+**원인**: `.env` 에 `AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS=True` 설정 시 SimpleAuthManager 가 모든 요청을 인증 없이 익명 admin으로 처리. `GET /api/v2/dags` 등 모든 엔드포인트가 200 반환, JWT의 `sub` 가 `Anonymous` 로 찍힘.
+
+**해결**: `.env` 에서 `AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS` 줄 삭제 후 api-server recreate.
+```bash
+# ops-vm
+sed -i '/AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS/d' infra/ops-vm/.env
+docker compose -f infra/ops-vm/docker-compose.yml up -d api-server
+```
+복구 확인: `curl -s -o /dev/null -w '%{http_code}' http://<tailnet-ip>:8080/api/v2/dags` → `401`.
+
+**재발 방지**: `all_admins=True` 는 dev/디버깅용. 운영 `.env` 에 절대 포함하지 말 것.
+
+---
+
 ## mac-server sleep 후 task 좀비 + worker wedge
 
 **증상**: mac sleep 중이던 task 가 깨어나도 UI 에서 영원히 `running`. 로그 안 뜸. worker 는 `No new job to process, N still running` 만 반복하며 새 job 안 받음.
