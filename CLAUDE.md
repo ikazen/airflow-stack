@@ -66,6 +66,7 @@ T-shirt sizing. edge3 concurrency 는 워커 단위 단일 값 (per-queue 설정
 | `big` | worker-vm-big, mac-server-big | vm=1, mac=4(gpu공유) | |
 | `gpu` | mac-server-big(`gpu,big` 공동 구독) | 4(big 공유) | |
 | `ops` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
+| `maint-worker-vm` | worker-vm-default(공동 구독) | 2(default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 
 `--edge-hostname` 으로 워커 이름 구분 (한 노드 두 워커 → 이름 충돌 방지):
 - worker-vm: `worker-vm` / `worker-vm-big`
@@ -150,6 +151,7 @@ class DockerOperator(_DockerBase):
 |---|---|---|---|
 | `maintenance` | `0 6 * * 3` (수요일 KST 06:00) | ops | 로그 볼륨이 ops-vm 에 있어 반드시 `queue="ops"` |
 | `registry_maintenance` | `0 4 * * *` (매일 KST 04:00) | ops | docker.sock DooD — registry retention+GC + build cache prune. ops 큐 전용 (decisions L28) |
+| `worker_vm_maintenance` | `0 5 * * *` (매일 KST 05:00) | maint-worker-vm | docker.sock DooD — 미사용 이미지+build cache prune(168h 보존). worker-vm 디스크 자동 정리 |
 | `test_environment` | `None` (수동) | ops/default/gpu | 3 노드 환경 확인용 |
 
 `maintenance` 는 `LOG_DIR=/opt/airflow/logs` 하위 `.log` 파일 14일 초과분 삭제. `db clean` 은 task 불가 (Task SDK DB 접근 없음) → `runbook.md` 참조.
