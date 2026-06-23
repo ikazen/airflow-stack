@@ -173,10 +173,8 @@ class DockerOperator(_DockerBase):
 | `minio_endpoint` | MinIO S3 엔드포인트 | reflexion_rondo_cycle |
 | `minio_access_key_id` | MinIO access key | reflexion_rondo_cycle |
 | `minio_secret_access_key` | MinIO secret key | reflexion_rondo_cycle |
-| `rondo_model_coder` | rondo task image 내 coder LLM 모델명 | reflexion_rondo_cycle |
-| `rondo_model_strategist` | rondo task image 내 strategist LLM 모델명 | reflexion_rondo_cycle |
-| `rondo_model_reflector` | rondo task image 내 reflector LLM 모델명 | reflexion_rondo_cycle |
-| `rondo_model_embedding` | rondo task image 내 embedding 모델명 | reflexion_rondo_cycle |
+
+> rondo 모델명은 Airflow Variable로 주입하지 않는다 — task 이미지 `config/settings.py` 기본값이 단일 소스(평문, 비밀 아님). 옛 `rondo_model_*` Variable은 DAG `_ENV`에 미연결(orphaned)이므로 Airflow에 남아 있으면 삭제 가능.
 
 ---
 
