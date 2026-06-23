@@ -9,6 +9,8 @@ daemon이 큐에서 아이템을 꺼내 trigger하고, DAG 완료 후 DB에서 �
 """
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pendulum
 from airflow.sdk import dag
 from airflow.providers.docker.operators.docker import DockerOperator as _DockerBase
@@ -60,6 +62,7 @@ def reflexion_rondo_cycle() -> None:
             " --queue-id {{ dag_run.conf['queue_id'] }}"
         ),
         environment=_ENV,
+        execution_timeout=timedelta(minutes=15),
         **_DOCKER_LIGHT,
     )
 
@@ -74,6 +77,7 @@ def reflexion_rondo_cycle() -> None:
                 f" --attempt-index {i}"
             ),
             environment=_ENV,
+            execution_timeout=timedelta(minutes=45),
             **_DOCKER_HEAVY,
         )
         for i in range(3)
@@ -84,9 +88,11 @@ def reflexion_rondo_cycle() -> None:
         command=(
             "uv run --no-sync python -m bin.run_promote_task"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
+            " --competition {{ dag_run.conf['competition_id'] }}"
         ),
         environment=_ENV,
-        **_DOCKER_LIGHT,
+        execution_timeout=timedelta(minutes=45),
+        **_DOCKER_HEAVY,
     )
 
     retrieve >> attempts >> promote
