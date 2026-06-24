@@ -27,6 +27,10 @@ _DOCKER_BASE = dict(
     force_pull=False,
     docker_url="unix://var/run/docker.sock",
     network_mode="host",
+    # bwrap이 --unshare-net(CLONE_NEWUSER) 을 호출할 수 있도록 seccomp 해제.
+    # DooD 기본 seccomp 프로파일이 clone(CLONE_NEWUSER) 을 차단해 EPERM 발생.
+    # network_mode="host" 는 컨테이너 자체 네트워크(DB/MinIO/Ollama) 용 — 차단은 bwrap subprocess 레벨.
+    security_opt=["seccomp=unconfined"],
     auto_remove="success",
     mount_tmp_dir=False,
 )
