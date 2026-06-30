@@ -82,7 +82,7 @@ def reflexion_rondo_autosubmit() -> None:
                 status = rec.get("status", "")
                 lb = rec.get("lb_score")
                 if status in _TERMINAL:
-                    print(f"  [{status}] {sid[:8]} lb={lb}")
+                    print(f"  [{status}] {rec.get('competition_id', '?')} {rec.get('message', '')} lb={lb}")
                 else:
                     still_pending.add(sid)
 
