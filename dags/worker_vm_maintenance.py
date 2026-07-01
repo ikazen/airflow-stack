@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pendulum
 from airflow.sdk import dag, task
+from lib.alert import notify_discord_on_failure
 
 QUEUE = "maint-worker-vm"
 PRUNE_UNTIL = "168h"
@@ -14,6 +15,7 @@ PRUNE_UNTIL = "168h"
     catchup=False,
     max_active_runs=1,
     tags=["ops"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def worker_vm_maintenance() -> None:
     @task(queue=QUEUE, execution_timeout=pendulum.duration(minutes=15))

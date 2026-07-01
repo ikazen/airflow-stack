@@ -8,6 +8,7 @@ from datetime import datetime
 from importlib.metadata import PackageNotFoundError, version
 
 from airflow.sdk import dag, task
+from lib.alert import notify_discord_on_failure
 
 
 @dag(
@@ -16,6 +17,7 @@ from airflow.sdk import dag, task
     schedule=None,
     catchup=False,
     tags=["test"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def test_environment() -> None:
 

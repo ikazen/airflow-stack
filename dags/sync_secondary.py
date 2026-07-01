@@ -3,6 +3,7 @@ from __future__ import annotations
 import pendulum
 from airflow.sdk import dag, task
 from data_sync_common import IMAGE
+from lib.alert import notify_discord_on_failure
 
 DOCKER = dict(
     image=IMAGE,
@@ -27,6 +28,7 @@ DOCKER = dict(
     max_active_runs=1,
     default_args={"execution_timeout": pendulum.duration(minutes=5)},
     tags=["lck-pics", "etl"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def sync_secondary() -> None:
 
