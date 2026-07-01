@@ -53,24 +53,16 @@ def daily_meta() -> None:
         return sync_secondary(force=True)
 
     @task.docker(**DOCKER)
-    def brackets() -> dict:
-        from app.tasks import sync_brackets
-
-        return sync_brackets()
-
-    @task.docker(**DOCKER)
-    def report(meta: dict, matches_result: dict, secondary_result: dict, brackets_result: dict) -> dict:
+    def report(meta: dict, matches_result: dict, secondary_result: dict) -> dict:
         from app.tasks import report
 
-        return report(meta=meta, matches=matches_result, secondary=secondary_result, brackets=brackets_result)
+        return report(meta=meta, matches=matches_result, secondary=secondary_result)
 
     meta = leagues()
     mt = matches()
     sc = secondary()
-    br = brackets()
     meta >> [mt, sc]  # leagues.is_active 갱신 후 풀 폴링
-    mt >> br
-    report(meta=meta, matches_result=mt, secondary_result=sc, brackets_result=br)
+    report(meta=meta, matches_result=mt, secondary_result=sc)
 
 
 daily_meta()

@@ -36,13 +36,7 @@ def sync_matches() -> None:
 
         return sync_matches(force=False)
 
-    @task.docker(**DOCKER)
-    def brackets() -> dict:
-        from app.tasks import sync_brackets
-
-        return sync_brackets()
-
-    matches() >> brackets()
+    matches()
 
 
 sync_matches()
