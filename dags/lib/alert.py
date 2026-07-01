@@ -40,7 +40,11 @@ def notify_discord_on_failure(context: dict[str, Any]) -> None:
         req = urllib.request.Request(
             webhook_url,
             data=payload,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                # discord 가 urllib 기본 User-Agent(Python-urllib/x.y)를 403으로 차단.
+                "User-Agent": "airflow-stack-alert/1.0",
+            },
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=10):
