@@ -15,6 +15,7 @@ from datetime import timedelta
 
 import pendulum
 from airflow.sdk import dag, task
+from lib.alert import notify_discord_on_failure
 
 _RONDO_API_URL = "http://rondo-daemon:8000"
 _TERMINAL = frozenset({"complete", "error", "invalid"})
@@ -29,6 +30,7 @@ _POLL_DEADLINE_SEC = 30 * 60  # 30분
     catchup=False,
     max_active_runs=1,
     tags=["rondo"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def reflexion_rondo_autosubmit() -> None:
     @task(queue="ops", retries=1, execution_timeout=timedelta(minutes=5))

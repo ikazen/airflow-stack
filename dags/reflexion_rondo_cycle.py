@@ -14,6 +14,7 @@ from datetime import timedelta
 import pendulum
 from airflow.sdk import dag
 from airflow.providers.docker.operators.docker import DockerOperator as _DockerBase
+from lib.alert import notify_discord_on_failure
 
 
 class DockerOperator(_DockerBase):
@@ -54,6 +55,7 @@ _ENV = {
     catchup=False,
     max_active_runs=4,
     tags=["rondo"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def reflexion_rondo_cycle() -> None:
     retrieve = DockerOperator(

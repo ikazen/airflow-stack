@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pendulum
 from airflow.sdk import dag, task
+from lib.alert import notify_discord_on_failure
 
 REGISTRY_URL = "http://registry:5000"
 REGISTRY_KEEP = 5
@@ -14,6 +15,7 @@ REGISTRY_KEEP = 5
     catchup=False,
     max_active_runs=1,
     tags=["ops"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def registry_maintenance() -> None:
     # 모든 task 는 queue="ops" — docker.sock 이 ops-vm 워커에만 마운트됨.

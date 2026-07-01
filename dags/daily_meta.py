@@ -3,6 +3,7 @@ from __future__ import annotations
 import pendulum
 from airflow.sdk import dag, task
 from data_sync_common import IMAGE
+from lib.alert import notify_discord_on_failure
 
 DOCKER = dict(
     image=IMAGE,
@@ -31,6 +32,7 @@ DOCKER = dict(
         "execution_timeout": pendulum.duration(minutes=10),
     },
     tags=["lck-pics", "etl"],
+    on_failure_callback=notify_discord_on_failure,
 )
 def daily_meta() -> None:
 
