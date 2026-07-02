@@ -6,6 +6,11 @@ DAG conf: {competition_id, stage, queue_id}
 
 daemon이 큐에서 아이템을 꺼내 trigger하고, DAG 완료 후 DB에서 결과를 읽는다.
 시크릿은 Airflow Variable로 주입 (var.value.xxx) — .env 마운트 없음.
+
+BON-237: 모든 task에 `--run-id {{ run_id }}` 전달 — raw.super_cycle_context의
+조회/삭제 키. queue_id는 같은 super-cycle의 여러 cycle(dag run)이 공유해서
+(max_active_runs=4) 동시 실행 시 서로의 context row를 덮어쓰거나 훔쳐 지우는
+레이스가 있었다. run_id(Airflow dag_run_id)는 cycle마다 유일해서 안전하다.
 """
 from __future__ import annotations
 
@@ -65,6 +70,7 @@ def reflexion_rondo_cycle() -> None:
             " --competition {{ dag_run.conf['competition_id'] }}"
             " --stage {{ dag_run.conf['stage'] }}"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
+            " --run-id {{ run_id }}"
         ),
         environment=_ENV,
         execution_timeout=timedelta(minutes=15),
@@ -79,6 +85,7 @@ def reflexion_rondo_cycle() -> None:
                 " --competition {{ dag_run.conf['competition_id'] }}"
                 " --stage {{ dag_run.conf['stage'] }}"
                 " --queue-id {{ dag_run.conf['queue_id'] }}"
+                " --run-id {{ run_id }}"
                 f" --attempt-index {i}"
             ),
             environment=_ENV,
@@ -93,6 +100,7 @@ def reflexion_rondo_cycle() -> None:
         command=(
             "uv run --no-sync python -m bin.run_promote_task"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
+            " --run-id {{ run_id }}"
             " --competition {{ dag_run.conf['competition_id'] }}"
         ),
         environment=_ENV,
