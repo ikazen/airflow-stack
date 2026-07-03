@@ -105,6 +105,7 @@ def reflexion_rondo_cycle() -> None:
         ),
         environment=_ENV,
         execution_timeout=timedelta(minutes=45),
+        trigger_rule="all_done",
         **_DOCKER_HEAVY,
     )
 
