@@ -104,7 +104,12 @@ def reflexion_rondo_cycle() -> None:
             " --competition {{ dag_run.conf['competition_id'] }}"
         ),
         environment=_ENV,
-        execution_timeout=timedelta(minutes=45),
+        # BON-257: PROMOTE_CONFIRM_SEEDS 3개(BON-247로 42 제거 후) × baseline+candidate
+        # 2회 eval = 6회 + holdout 1회 + merge-verify 1회(BON-256) = 최대 8회
+        # eval_isolated 호출. reflexion-rondo runtime/isolate.py DEFAULT_TIMEOUT=600s
+        # 기준 worst-case 8*600s=4800s=80분. 45분으로는 큰 데이터셋에서 못 버틴다 —
+        # 80분 worst-case + reflect 루프/materialize 오버헤드 여유를 둬 100분으로 상향.
+        execution_timeout=timedelta(minutes=100),
         trigger_rule="all_done",
         **_DOCKER_HEAVY,
     )
