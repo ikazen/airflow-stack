@@ -1,4 +1,4 @@
-"""매일 KST 18:00 mac-server 호스트의 claude CLI 에 "ㅎㅇ" 전송.
+"""매일 KST 12:59/13:00/18:00/18:01 mac-server 호스트의 claude CLI 에 "ㅎㅇ" 전송.
 
 claude 는 mac-server 호스트 사용자의 macOS 로그인 키체인에 인증돼 있다. 키체인은
 SSH 로그인(PAM 인증)을 거친 세션에서만 언락되고 launchd 등 데몬 프로세스에서는
@@ -21,12 +21,20 @@ from datetime import timedelta
 
 import pendulum
 from airflow.sdk import dag, task
+from airflow.timetables.trigger import MultipleCronTriggerTimetable
 from lib.alert import notify_discord_on_failure
 
 
 @dag(
     dag_id="daily_claude_ping",
-    schedule="0 18 * * *",
+    # 12:59/13:00, 18:00/18:01 더블탭 — 단일 cron 으론 교차곱 문제로 표현 불가
+    schedule=MultipleCronTriggerTimetable(
+        "59 12 * * *",
+        "0 13 * * *",
+        "0 18 * * *",
+        "1 18 * * *",
+        timezone="Asia/Seoul",
+    ),
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     max_active_runs=1,
