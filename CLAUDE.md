@@ -131,18 +131,22 @@ force_pull=False
 |---|---|---|
 | `reflexion_rondo_cycle` | `schedule=None` (daemon이 trigger) | `max_active_runs=4` |
 | `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops 큐 단일 task, `max_active_runs=1` |
+| `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops` 큐 |
 
 `reflexion_rondo_cycle`: `conf` 주입 `{competition_id, stage, queue_id}`. 태스크: `retrieve`(default) → `attempt_0/1/2`(big) → `promote`(default).
 `network_mode="host"` (lck-pics 와 달리 bridge 아님).
 시크릿은 `.env` 마운트 없이 Airflow Variable 로 주입: `rondo_db_url`, `ollama_base_url`, `ollama_cloud_base_url`, `ollama_api_key`, `minio_endpoint`.
+task 이미지 태그도 Variable(`rondo_task_image_version`) — git 하드코딩 아님(issue #2, decisions L29). `reflexion_rondo_deploy` DAG가 빌드 직후 bump.
 
 `reflexion_rondo_autosubmit`: 최근 24h cycle 실행 대회 중 best CV 개선 시에만 Kaggle 자동 제출.
 daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
 
+`reflexion_rondo_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), daemon+task 이미지 빌드+push+사전검증 후 task Variable bump. `ops` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼) — 신규 credential 불필요(public repo clone 무인증, registry 무인증).
+
 DockerOperator 를 직접 사용 (템플릿이 필요해 `@task.docker` 대신):
 ```python
 class DockerOperator(_DockerBase):
-    template_fields = ("command", "environment")
+    template_fields = ("command", "environment", "image")   # image: Variable 기반 태그 템플릿용
 ```
 
 ### 운영 DAG
@@ -173,6 +177,7 @@ class DockerOperator(_DockerBase):
 | `minio_endpoint` | MinIO S3 엔드포인트 | reflexion_rondo_cycle |
 | `minio_access_key_id` | MinIO access key | reflexion_rondo_cycle |
 | `minio_secret_access_key` | MinIO secret key | reflexion_rondo_cycle |
+| `rondo_task_image_version` | task 이미지 태그(예: `v1.2.27`). `reflexion_rondo_deploy`가 빌드 직후 bump | reflexion_rondo_cycle |
 
 > rondo 모델명은 Airflow Variable로 주입하지 않는다 — task 이미지 `config/settings.py` 기본값이 단일 소스(평문, 비밀 아님). 옛 `rondo_model_*` Variable은 DAG `_ENV`에 미연결(orphaned)이므로 Airflow에 남아 있으면 삭제 가능.
 
