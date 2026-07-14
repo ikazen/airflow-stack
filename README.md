@@ -31,9 +31,9 @@ dags/                  DAG entry (sync_matches / sync_secondary / daily_meta + m
 
 - 컨벤션: `CLAUDE.md`
 - 결정: `docs/decisions.md`
-- 작업·진행 상태: Linear (가변 작업·백로그·Phase 마일스톤)
+- 작업·진행 상태: GitHub Issues (가변 작업·백로그·GitHub Milestone)
 - 셋업: `docs/setup.md`
 
 ## 현재 상태
 
-플랫폼 가동 중. lck.pics 동기화 DAG 3종 운영 중 (`@task.docker`). 진행 상황·백로그는 Linear.
+플랫폼 가동 중. lck.pics 동기화 DAG 3종 운영 중 (`@task.docker`). 진행 상황·백로그는 GitHub Issues.
