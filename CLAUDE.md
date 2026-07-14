@@ -246,7 +246,7 @@ https://raw.githubusercontent.com/apache/airflow/constraints-3.2.1/constraints-3
 ## 진입점
 
 - 결정: `docs/decisions.md`
-- 작업·진행 상태·백로그: Linear (가변 작업·마일스톤). repo↔Linear 매칭은 프로젝트 메모리
+- 작업·진행 상태·백로그: GitHub Issues (가변 작업). 마일스톤은 GitHub Milestone
 - 셋업 절차: `docs/setup.md`
 - 운영 절차: `docs/runbook.md`
 - 운영 문제: `docs/troubleshooting.md`
