@@ -23,10 +23,14 @@ from lib.alert import notify_discord_on_failure
 
 
 class DockerOperator(_DockerBase):
-    template_fields = ("command", "environment")
+    template_fields = ("command", "environment", "image")
 
 
-IMAGE = "registry.internal:5000/reflexion-rondo/task:v1.2.26"
+# issue #2: 태그의 source of truth가 git(이 파일)에서 Airflow Variable로 이동.
+# reflexion_rondo_deploy DAG가 빌드 후 Variable을 bump한다 — git push 불필요,
+# 즉시 반영. 최초 배포 전 `rondo_task_image_version`을 현재 라이브 태그로 1회
+# 수동 설정해야 한다(비어있으면 이미지 참조가 깨짐).
+IMAGE = "registry.internal:5000/reflexion-rondo/task:{{ var.value.rondo_task_image_version }}"
 
 _DOCKER_BASE = dict(
     image=IMAGE,
