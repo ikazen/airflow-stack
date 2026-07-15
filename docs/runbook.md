@@ -47,17 +47,18 @@ Airflow Variables 로 task 자격증명 주입 (Connections 미사용). `airflow
 | `rondo_model_reflector` | rondo reflector LLM 모델명 |
 | `rondo_model_embedding` | rondo embedding 모델명 |
 | `rondo_task_image_version` | reflexion-rondo task 이미지 태그(예: `v1.2.27`). `reflexion_rondo_deploy` DAG가 빌드 후 bump — git push 아님, 즉시 반영(decisions.md L29) |
+| `data_sync_image_version` | lck-pics data-sync 이미지 태그(예: `7a9d030`). 빌드는 lol-list `scripts/build-and-push.sh` 수동(M1 mac) — bump 는 UI/CLI 로 직접, git push 아님 |
 
 Variables 는 UI (Admin → Variables) 또는 `airflow-variables.json` import 로 복구. 메타 DB 손실 시 `airflow-variables.json` (로컬 백업) 에서 재import.
 
-**최초 설정 필요**: `rondo_task_image_version`은 `reflexion_rondo_deploy` DAG를 처음 도입할 때 현재 라이브 태그로 1회 수동 설정해야 한다(UI Admin → Variables, 또는 `airflow variables set rondo_task_image_version v1.2.26`) — 비어있으면 `reflexion_rondo_cycle`의 이미지 참조가 깨진다.
+**최초 설정 필요**: `rondo_task_image_version`은 `reflexion_rondo_deploy` DAG를 처음 도입할 때, `data_sync_image_version`은 이 Variable 기반 방식 도입 시 각각 현재 라이브 태그로 1회 수동 설정해야 한다(UI Admin → Variables, 또는 `airflow variables set <key> <tag>`) — 비어있으면 해당 DAG의 이미지 참조가 깨진다.
 
 ## 코드 배포
 
 | 무엇을 바꿨나 | 배포 |
 |---|---|
 | **DAG 파일** (`dags/`) | repo 에 `git push` → GitDagBundle 이 `refresh_interval` (60s) 마다 자동 fetch. 호스트 작업 0 |
-| **task body 로직·라이브러리** | `@task.docker` 이미지 빌드 → `registry.internal` push (절차·insecure-registries = `nexus-prime:docs/dev-guide.md`). DAG 의 image 태그를 새 sha 로 갱신 후 push |
+| **lck-pics data-sync 이미지** | lol-list `scripts/build-and-push.sh` (M1 mac, arm64) 로 빌드+push → `data_sync_image_version` Variable 을 새 sha 로 bump(UI/CLI). git push 불필요, 즉시 반영 |
 | **reflexion-rondo daemon+task 이미지** | Airflow UI에서 `reflexion_rondo_deploy` DAG를 `{"tag": "vX.Y.Z"}` conf로 트리거(Trigger DAG w/ config) — `ops` 큐가 clone+build+push까지 수행(decisions.md L29), task는 Variable bump로 즉시 반영. daemon의 실제 배포(compose.yml+재시작)는 reflexion-rondo `deploy/release.sh vX.Y.Z`로 별도 실행 |
 | **인프라** (compose / Dockerfile / `.env`) | 해당 호스트 `cd ~/projects/airflow-stack && git pull` + `docker compose -f infra/<host>/docker-compose.yml up -d --build`. Dockerfile (provider 핀 등) 변경은 `--build` 필수 — `infra/airflow.Dockerfile`에 `git` CLI 추가(issue #2)로 **3개 호스트(ops-vm/worker-vm/mac-server) 전부 재빌드 필요** |
 
