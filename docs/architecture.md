@@ -42,7 +42,7 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 | `sync_secondary` | `*/15 * * * *` | default | `max_active_runs=1`, `exec_timeout=5m` |
 | `daily_meta` | `0 0 * * *` (KST) | default | `retries=2`, `exec_timeout=10m`. leagues → [matches, secondary] → report |
 
-세 DAG 모두 `dags/data_sync_common.py` 의 `IMAGE` 공유 (sha-pinned). Airflow Variables `db_url`·`db_key` 로 자격증명 주입.
+세 DAG 모두 `dags/data_sync_common.py` 의 `IMAGE` 공유. 태그는 `data_sync_image_version` Variable 로 주입(빌드는 lol-list `scripts/build-and-push.sh` 수동, M1 mac). Airflow Variables `db_url`·`db_key`·`data_sync_image_version` 로 주입.
 
 ### reflexion-rondo
 
