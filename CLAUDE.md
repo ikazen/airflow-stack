@@ -170,16 +170,15 @@ class DockerOperator(_DockerBase):
 |---|---|---|
 | `db_url` | lck-pics Supabase URL | sync_matches, sync_secondary, daily_meta |
 | `db_key` | lck-pics Supabase service role key | sync_matches, sync_secondary, daily_meta |
+| `data_sync_image_version` | lck-pics sync task 이미지 태그 | sync_matches, sync_secondary, daily_meta |
 | `rondo_db_url` | reflexion-rondo DB | reflexion_rondo_cycle |
 | `ollama_base_url` | Ollama API 엔드포인트 | reflexion_rondo_cycle |
 | `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 | reflexion_rondo_cycle |
 | `ollama_api_key` | Ollama API key | reflexion_rondo_cycle |
 | `minio_endpoint` | MinIO S3 엔드포인트 | reflexion_rondo_cycle |
-| `minio_access_key_id` | MinIO access key | reflexion_rondo_cycle |
-| `minio_secret_access_key` | MinIO secret key | reflexion_rondo_cycle |
 | `rondo_task_image_version` | task 이미지 태그(예: `v1.2.27`). `reflexion_rondo_deploy`가 빌드 직후 bump | reflexion_rondo_cycle |
 
-> rondo 모델명은 Airflow Variable로 주입하지 않는다 — task 이미지 `config/settings.py` 기본값이 단일 소스(평문, 비밀 아님). 옛 `rondo_model_*` Variable은 DAG `_ENV`에 미연결(orphaned)이므로 Airflow에 남아 있으면 삭제 가능.
+> rondo 모델명은 Airflow Variable로 주입하지 않는다 — task 이미지 `config/settings.py` 기본값이 단일 소스(평문, 비밀 아님).
 
 ---
 
