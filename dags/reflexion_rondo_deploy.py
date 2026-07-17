@@ -24,16 +24,29 @@ from lib.alert import notify_discord_on_failure
 from lib.image_deploy import build_and_push
 
 _REPO_URL = "https://github.com/ikazen/reflexion-rondo.git"
-_AIRFLOW_URL = "http://airflow-api-server-1:8080"
 
-# reflexion_rondo_cycle.py의 _ENV와 동일한 Variable 집합 재사용 — 새 Variable 불필요.
-_PREFLIGHT_ENV_VARS = {
-    "RONDO_DB_URL": "rondo_db_url",
-    "OLLAMA_BASE_URL": "ollama_base_url",
-    "OLLAMA_CLOUD_BASE_URL": "ollama_cloud_base_url",
-    "OLLAMA_API_KEY": "ollama_api_key",
-    "MINIO_ENDPOINT": "minio_endpoint",
-}
+# issue #12: reflexion_rondo_cycle.py의 _ENV(Airflow Variable 기반, rondo_db_url 등)는
+# cross-host 접근용 값이다(worker-vm/mac-server가 Tailscale로 ops-vm Postgres에 닿기 위한
+# tailnet IP). preflight 컨테이너는 network="nexus"로 ops-vm 자기 자신에서 뜨므로 그 값을
+# 쓰면 "No route to host"가 난다 — 게다가 AIRFLOW_USER/PASSWORD도 아예 없어서 airflow
+# 헬스체크가 400을 낸다. 대신 ops-vm 호스트의 /var/lib/rondo/.env(reflexion-rondo daemon이
+# 실제로 쓰는 파일, nexus 내부용 값 + AIRFLOW_USER/PASSWORD 포함 — deploy/release.sh의
+# 기존 사전검증이 --env-file로 이미 성공적으로 쓰고 있음)를 그대로 읽어 같은 진실
+# 소스로 통일한다. edge-worker-ops에 이 경로가 볼륨 마운트돼 있어야 한다
+# (infra/ops-vm/docker-compose.yml).
+_RONDO_ENV_PATH = "/var/lib/rondo/.env"
+
+
+def _load_rondo_env() -> dict[str, str]:
+    env: dict[str, str] = {}
+    with open(_RONDO_ENV_PATH) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            env[k] = v
+    return env
 
 
 @dag(
@@ -64,12 +77,11 @@ def reflexion_rondo_deploy() -> None:
 
     @task(queue="ops", execution_timeout=timedelta(minutes=5), trigger_rule="all_success")
     def preflight(daemon_image: str, task_image: str) -> None:
-        """일회성 컨테이너로 두 이미지 검증 — deploy/release.sh 사전검증(issue #15)과 동일 로직."""
+        """일회성 컨테이너로 두 이미지 검증 — deploy/release.sh 사전검증(issue #15)과 동일 로직·동일 env 소스."""
         import docker
 
         client = docker.DockerClient(base_url="unix://var/run/docker.sock")
-        env = {env_key: Variable.get(var_key) for env_key, var_key in _PREFLIGHT_ENV_VARS.items()}
-        env["AIRFLOW_URL"] = _AIRFLOW_URL
+        env = _load_rondo_env()
 
         client.containers.run(
             daemon_image,

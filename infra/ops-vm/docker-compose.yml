@@ -115,6 +115,9 @@ services:
     volumes:
       - airflow-logs:/opt/airflow/logs
       - /var/run/docker.sock:/var/run/docker.sock
+      # issue #12: reflexion_rondo_deploy DAG의 preflight 태스크가 release.sh와 동일한
+      # 진실 소스(nexus 내부용 값 + AIRFLOW_USER/PASSWORD)를 읽을 수 있도록.
+      - /var/lib/rondo/.env:/var/lib/rondo/.env:ro
     logging:
       driver: json-file
       options:
