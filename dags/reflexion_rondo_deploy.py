@@ -35,6 +35,10 @@ _REPO_URL = "https://github.com/ikazen/reflexion-rondo.git"
 # 소스로 통일한다. edge-worker-ops에 이 경로가 볼륨 마운트돼 있어야 한다
 # (infra/ops-vm/docker-compose.yml).
 _RONDO_ENV_PATH = "/var/lib/rondo/.env"
+# reflexion-rondo deploy/compose.yml이 실제 daemon 컨테이너에도 env_file 로드 후 이 값으로
+# override한다(daemon도 network: nexus) — .env 파일 자체의 AIRFLOW_URL은 다른 네트워크
+# 모드를 전제한 값이라 nexus 네트워크에서는 안 맞는다. 같은 override를 여기도 적용한다.
+_AIRFLOW_URL = "http://airflow-api-server-1:8080"
 
 
 def _load_rondo_env() -> dict[str, str]:
@@ -46,6 +50,7 @@ def _load_rondo_env() -> dict[str, str]:
                 continue
             k, v = line.split("=", 1)
             env[k] = v
+    env["AIRFLOW_URL"] = _AIRFLOW_URL
     return env
 
 
