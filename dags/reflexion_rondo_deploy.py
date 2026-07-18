@@ -11,7 +11,7 @@ build 단계가 필요 없어진다.
 
 새 credential 불필요 — reflexion-rondo는 public repo라 clone에 인증이 없고,
 registry.internal:5000은 무인증(HTTP insecure, tailnet 경계로만 보호), task
-Variable bump는 Airflow 자체 API. ops 큐 docker.sock 재사용 범위 확장은
+Variable bump는 Airflow 자체 API. ops-vm 큐 docker.sock 재사용 범위 확장은
 docs/decisions.md L28 amendment 참조.
 """
 from __future__ import annotations
@@ -64,7 +64,7 @@ def _load_rondo_env() -> dict[str, str]:
     on_failure_callback=notify_discord_on_failure,
 )
 def reflexion_rondo_deploy() -> None:
-    @task(queue="ops", execution_timeout=timedelta(minutes=20))
+    @task(queue="ops-vm", execution_timeout=timedelta(minutes=20))
     def build_daemon() -> str:
         tag = get_current_context()["dag_run"].conf["tag"]
         return build_and_push(
@@ -72,7 +72,7 @@ def reflexion_rondo_deploy() -> None:
             dockerfile="deploy/Dockerfile", image_repo="reflexion-rondo/daemon", tag=tag,
         )
 
-    @task(queue="ops", execution_timeout=timedelta(minutes=20))
+    @task(queue="ops-vm", execution_timeout=timedelta(minutes=20))
     def build_task() -> str:
         tag = get_current_context()["dag_run"].conf["tag"]
         return build_and_push(
@@ -80,7 +80,7 @@ def reflexion_rondo_deploy() -> None:
             dockerfile="deploy/Dockerfile.task", image_repo="reflexion-rondo/task", tag=tag,
         )
 
-    @task(queue="ops", execution_timeout=timedelta(minutes=5), trigger_rule="all_success")
+    @task(queue="ops-vm", execution_timeout=timedelta(minutes=5), trigger_rule="all_success")
     def preflight(daemon_image: str, task_image: str) -> None:
         """일회성 컨테이너로 두 이미지 검증 — deploy/release.sh 사전검증(issue #15)과 동일 로직·동일 env 소스."""
         import docker

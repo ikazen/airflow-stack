@@ -106,12 +106,12 @@ services:
     env_file: .env
     environment:
       AIRFLOW__EDGE__API_URL: http://api-server:8080/edge_worker/v1/rpcapi
-    # DooD: ops 큐 = privileged 인프라 유지보수 전용. docker.sock = 호스트 docker root.
+    # DooD: ops-vm 큐 = privileged 인프라 유지보수 전용. docker.sock = 호스트 docker root.
     # airflow uid(50000)가 host docker gid 에 속해야 socket 접근 가능.
     group_add:
       - "${DOCKER_GID}"
     hostname: ops-vm
-    command: airflow edge worker --queues ops --concurrency 2
+    command: airflow edge worker --queues ops-vm --concurrency 2
     volumes:
       - airflow-logs:/opt/airflow/logs
       - /var/run/docker.sock:/var/run/docker.sock

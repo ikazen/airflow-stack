@@ -33,7 +33,7 @@ _POLL_DEADLINE_SEC = 30 * 60  # 30분
     on_failure_callback=notify_discord_on_failure,
 )
 def reflexion_rondo_autosubmit() -> None:
-    @task(queue="ops", retries=1, execution_timeout=timedelta(minutes=5))
+    @task(queue="ops-vm", retries=1, execution_timeout=timedelta(minutes=5))
     def trigger_auto_submit() -> list[str]:
         url = f"{_RONDO_API_URL}/api/submissions/auto"
         payload = json.dumps({"window_hours": 24}).encode()
@@ -57,7 +57,7 @@ def reflexion_rondo_autosubmit() -> None:
 
         return [s["submission_id"] for s in submitted]
 
-    @task(queue="ops", execution_timeout=timedelta(minutes=35))
+    @task(queue="ops-vm", execution_timeout=timedelta(minutes=35))
     def poll_submissions(ids: list[str]) -> None:
         if not ids:
             print("[poll] no submissions to poll")

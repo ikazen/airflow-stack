@@ -42,9 +42,9 @@ from lib.alert import notify_discord_on_failure
     on_failure_callback=notify_discord_on_failure,
 )
 def daily_claude_ping() -> None:
-    # queue="ops": ops-vm edge-worker 가 env_file(.env) 로 SSH 접속 정보를 os.environ 에 가짐
+    # queue="ops-vm": ops-vm edge-worker 가 env_file(.env) 로 SSH 접속 정보를 os.environ 에 가짐
     # retries: mac sleep/wake 로 sshd 가 일시 응답하지 않을 수 있음 (daily_meta 와 동일 논리)
-    @task(queue="ops", retries=2, retry_delay=timedelta(minutes=2), execution_timeout=timedelta(minutes=3))
+    @task(queue="ops-vm", retries=2, retry_delay=timedelta(minutes=2), execution_timeout=timedelta(minutes=3))
     def send_ping() -> None:
         host = os.environ["CLAUDE_SSH_HOST"]
         user = os.environ["CLAUDE_SSH_USER"]
