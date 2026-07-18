@@ -22,7 +22,7 @@ Airflow 3.2.x self-host. Claude 세션 컨벤션. 사용자 글로벌 `~/.claude
 
 | 호스트 | 역할 | compose 파일 |
 |---|---|---|
-| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops(`ops` c=2, docker.sock 마운트) | `infra/ops-vm/docker-compose.yml` |
+| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops(`ops-vm` c=2, docker.sock 마운트) | `infra/ops-vm/docker-compose.yml` |
 | worker-vm | edge-worker-default(`default` c=2) / edge-worker-big(`big` c=1) | `infra/worker-vm/docker-compose.yml` |
 | mac-server | edge-worker-default(`default` c=8) / edge-worker-big(`gpu,big` c=4) | `infra/mac-server/docker-compose.yml` |
 
@@ -65,8 +65,9 @@ T-shirt sizing. edge3 concurrency 는 워커 단위 단일 값 (per-queue 설정
 | `default` | worker-vm-default, mac-server-default | vm=2, mac=8 | |
 | `big` | worker-vm-big, mac-server-big | vm=1, mac=4(gpu공유) | |
 | `gpu` | mac-server-big(`gpu,big` 공동 구독) | 4(big 공유) | |
-| `ops` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
-| `maint-worker-vm` | worker-vm-default(공동 구독) | 2(default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
+| `ops-vm` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
+| `worker-vm` | worker-vm-default(공동 구독) | 2(default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
+| `mac-server` | mac-server-default(공동 구독) | 8(default 공유) | mac-server 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 
 `--edge-hostname` 으로 워커 이름 구분 (한 노드 두 워커 → 이름 충돌 방지):
 - worker-vm: `worker-vm` / `worker-vm-big`
@@ -130,8 +131,8 @@ force_pull=False
 | DAG | 스케줄 | 비고 |
 |---|---|---|
 | `reflexion_rondo_cycle` | `schedule=None` (daemon이 trigger) | `max_active_runs=4` |
-| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops 큐 단일 task, `max_active_runs=1` |
-| `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops` 큐 |
+| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm 큐 단일 task, `max_active_runs=1` |
+| `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops-vm` 큐 |
 
 `reflexion_rondo_cycle`: `conf` 주입 `{competition_id, stage, queue_id}`. 태스크: `retrieve`(default) → `attempt_0/1/2`(big) → `promote`(default).
 `network_mode="host"` (lck-pics 와 달리 bridge 아님).
@@ -141,7 +142,7 @@ task 이미지 태그도 Variable(`rondo_task_image_version`) — git 하드코�
 `reflexion_rondo_autosubmit`: 최근 24h cycle 실행 대회 중 best CV 개선 시에만 Kaggle 자동 제출.
 daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
 
-`reflexion_rondo_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), daemon+task 이미지 빌드+push+사전검증 후 task Variable bump. `ops` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼) — 신규 credential 불필요(public repo clone 무인증, registry 무인증).
+`reflexion_rondo_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), daemon+task 이미지 빌드+push+사전검증 후 task Variable bump. `ops-vm` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼) — 신규 credential 불필요(public repo clone 무인증, registry 무인증).
 
 DockerOperator 를 직접 사용 (템플릿이 필요해 `@task.docker` 대신):
 ```python
@@ -153,12 +154,11 @@ class DockerOperator(_DockerBase):
 
 | DAG | 스케줄 | queue | 비고 |
 |---|---|---|---|
-| `maintenance` | `0 6 * * 3` (수요일 KST 06:00) | ops | 로그 볼륨이 ops-vm 에 있어 반드시 `queue="ops"` |
-| `registry_maintenance` | `0 4 * * *` (매일 KST 04:00) | ops | docker.sock DooD — registry retention+GC + build cache prune. ops 큐 전용 (decisions L28) |
-| `worker_vm_maintenance` | `0 5 * * *` (매일 KST 05:00) | maint-worker-vm | docker.sock DooD — 미사용 이미지+build cache prune(168h 보존). worker-vm 디스크 자동 정리 |
-| `test_environment` | `None` (수동) | ops/default/gpu | 3 노드 환경 확인용 |
+| `maint_airflow` | `0 6 * * 3` (수요일 KST 06:00) | ops-vm | 로그 볼륨이 ops-vm 에 있어 반드시 `queue="ops-vm"`. db clean 자동화 포함 |
+| `maint_registry` | `0 4 * * *` (매일 KST 04:00) | ops-vm/worker-vm/mac-server | docker.sock DooD — registry retention+GC+build cache prune(ops-vm) + 노드별 미사용 이미지+build cache prune(worker-vm/mac-server, 168h 보존). 노드별 task 는 서로 독립, 각자 큐에서 병렬 |
+| `test_environment` | `None` (수동) | ops-vm/default/gpu | 3 노드 환경 확인용 |
 
-`maintenance` 는 `LOG_DIR=/opt/airflow/logs` 하위 `.log` 파일 14일 초과분 삭제. `db clean` 은 task 불가 (Task SDK DB 접근 없음) → `runbook.md` 참조.
+`maint_airflow` 는 `LOG_DIR=/opt/airflow/logs` 하위 `.log` 파일 14일 초과분 삭제 + `db clean`(DooD exec 로 scheduler 컨테이너에서 실행, 14일 이전 메타 삭제) — 수동 fallback 절차는 `runbook.md` 참조.
 
 ---
 
@@ -219,8 +219,8 @@ Airflow 3 채택의 본 가치는 Edge Executor + Task SDK + DAG Versioning 이�
 ### 워커 recreate 이름 충돌
 `up -d` 후 빠른 recreate 시 `A worker with the name '<host>' is already active` crash-loop. 해소: 워커 stop → ops-vm 에서 `airflow edge remove-remote-edge-worker -H <hostname>` → 재시작. `troubleshooting.md` / `runbook.md` 참조.
 
-### db clean 은 task 불가
-Task SDK 가 task 에 `SQL_ALCHEMY_CONN` 을 주지 않음. ops-vm scheduler 컨테이너에서 직접.
+### db clean — task 프로세스 직접 불가, DooD exec 로 자동화
+Task SDK 가 task 에 `SQL_ALCHEMY_CONN` 을 주지 않아 task 프로세스 자체에서 `airflow db clean` 실행 불가. `maint_airflow` 가 docker.sock DooD exec 로 scheduler 컨테이너(`airflow-scheduler-1`)에서 실행 — `maint_registry` 의 registry GC 와 동일 패턴. 수동 필요 시에도 ops-vm scheduler 컨테이너에서 직접.
 
 ### 메트릭
 api-server(uvicorn) 는 StatsD 클라이언트를 init 안 함 → `edge_worker.*` 메트릭 무음. 워커 오프라인 감지는 `node_exporter up` 으로 대체.

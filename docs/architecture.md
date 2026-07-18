@@ -6,7 +6,7 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 
 | 호스트 | airflow 서비스 |
 |---|---|
-| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops (`ops` c=2) |
+| ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops (`ops-vm` c=2) |
 | worker-vm | edge-worker-default (`default` c=2, `--edge-hostname worker-vm`) / edge-worker-big (`big` c=1, `--edge-hostname worker-vm-big`) |
 | mac-server | edge-worker-default (`default` c=8, `--edge-hostname mac-server`) / edge-worker-big (`gpu,big` c=4, `--edge-hostname mac-server-big`) |
 
@@ -28,7 +28,9 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 | `default` | worker-vm / mac-server | vm=2, mac=8 | 미지정 task 의 기본 |
 | `big` | worker-vm-big / mac-server-big | vm=1, mac=4 | heavy task 명시 opt-in (`queue="big"`) |
 | `gpu` | mac-server-big (`gpu,big` 공동 구독) | 4 (big 공유) | `queue="gpu"` 명시. GPU / Neural Engine. M1 가용성 가정 금지 |
-| `ops` | ops-vm | 2 | control-plane 작업 전용 (ops-vm 은 `default` 미구독) |
+| `ops-vm` | ops-vm | 2 | control-plane 작업 전용 (ops-vm 은 `default` 미구독) |
+| `worker-vm` | worker-vm-default (공동 구독) | 2 (default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
+| `mac-server` | mac-server-default (공동 구독) | 8 (default 공유) | mac-server 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 
 cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limit`/`cpus` 로 별도 세트.
 
@@ -49,7 +51,7 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 | DAG | 스케줄 | queue | 비고 |
 |---|---|---|---|
 | `reflexion_rondo_cycle` | `None` (daemon이 trigger) | default/big | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
-| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops | `max_active_runs=1`, `retries=1`, `exec_timeout=5m`. best CV 개선 시만 Kaggle 자동 제출 |
+| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm | `max_active_runs=1`, `retries=1`, `exec_timeout=5m`. best CV 개선 시만 Kaggle 자동 제출 |
 
 `reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big) → promote(default). Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
 
@@ -59,8 +61,9 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 
 | DAG | 스케줄 | queue | 비고 |
 |---|---|---|---|
-| `maintenance` | `0 6 * * 3` (KST) | ops | 로그 14일 보존. 로그 볼륨이 ops-vm 에 있어 `queue="ops"` 필수 |
-| `test_environment` | None (수동) | ops/default/gpu | 3 노드 환경 확인 |
+| `maint_airflow` | `0 6 * * 3` (KST) | ops-vm | 로그 14일 보존 + db clean(DooD exec). 로그 볼륨이 ops-vm 에 있어 `queue="ops-vm"` 필수 |
+| `maint_registry` | `0 4 * * *` (KST) | ops-vm/worker-vm/mac-server | docker.sock DooD. registry retention+GC+build cache prune(ops-vm) + 노드별 이미지·build cache prune(worker-vm/mac-server, 168h 보존) |
+| `test_environment` | None (수동) | ops-vm/default/gpu | 3 노드 환경 확인 |
 
 ## `@task.docker` DooD 패턴
 

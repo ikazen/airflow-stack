@@ -59,7 +59,7 @@ Variables 는 UI (Admin → Variables) 또는 `airflow-variables.json` import �
 |---|---|
 | **DAG 파일** (`dags/`) | repo 에 `git push` → GitDagBundle 이 `refresh_interval` (60s) 마다 자동 fetch. 호스트 작업 0 |
 | **lck-pics data-sync 이미지** | lol-list `scripts/build-and-push.sh` (M1 mac, arm64) 로 빌드+push → `data_sync_image_version` Variable 을 새 sha 로 bump(UI/CLI). git push 불필요, 즉시 반영 |
-| **reflexion-rondo daemon+task 이미지** | Airflow UI에서 `reflexion_rondo_deploy` DAG를 `{"tag": "vX.Y.Z"}` conf로 트리거(Trigger DAG w/ config) — `ops` 큐가 clone+build+push까지 수행(decisions.md L29), task는 Variable bump로 즉시 반영. daemon의 실제 배포(compose.yml+재시작)는 reflexion-rondo `deploy/release.sh vX.Y.Z`로 별도 실행 |
+| **reflexion-rondo daemon+task 이미지** | Airflow UI에서 `reflexion_rondo_deploy` DAG를 `{"tag": "vX.Y.Z"}` conf로 트리거(Trigger DAG w/ config) — `ops-vm` 큐가 clone+build+push까지 수행(decisions.md L29), task는 Variable bump로 즉시 반영. daemon의 실제 배포(compose.yml+재시작)는 reflexion-rondo `deploy/release.sh vX.Y.Z`로 별도 실행 |
 | **인프라** (compose / Dockerfile / `.env`) | 해당 호스트 `cd ~/projects/airflow-stack && git pull` + `docker compose -f infra/<host>/docker-compose.yml up -d --build`. Dockerfile (provider 핀 등) 변경은 `--build` 필수 — `infra/airflow.Dockerfile`에 `git` CLI 추가(issue #2)로 **3개 호스트(ops-vm/worker-vm/mac-server) 전부 재빌드 필요** |
 
 호스트 배포 경로 = `~/projects/airflow-stack` (mac 은 `/Users/.../projects/...`). SSH = tailnet alias `ops-vm`/`worker-vm`/`mac-server`.
@@ -81,19 +81,19 @@ docker compose -f infra/<host>/docker-compose.yml start <edge-worker-service>
 
 mac-server compose 에 drain 설정이 박혀 있어 (`DRAIN_TIMEOUT_SEC=10`, `DRAIN_KILL_GRACE_SEC=5`, `stop_grace_period: 30s`) force-recreate 시 ~15s 안에 OFFLINE 등록 완료 — 이 값은 수정하지 말 것 (`airflow3-learnings.md` sleep/wake 섹션 참조).
 
-## 메타 DB 정리 (db clean) — host-level, 수동
+## 메타 DB 정리 (db clean)
 
-`airflow db clean` 은 **DAG task 로 불가** — Airflow 3 Task SDK 가 task 에 DB 접속(`SQL_ALCHEMY_CONN`)을 주지 않음 (`Could not parse SQLAlchemy URL` 로 실패). task 는 api-server 경유만, DB 직접 접근은 컨트롤 플레인 컨테이너에서.
+`airflow db clean` 은 **DAG task 프로세스 자체로 불가** — Airflow 3 Task SDK 가 task 에 DB 접속(`SQL_ALCHEMY_CONN`)을 주지 않음 (`Could not parse SQLAlchemy URL` 로 실패). task 는 api-server 경유만, DB 직접 접근은 컨트롤 플레인 컨테이너에서.
 
-→ 필요 시 ops-vm 에서 직접 (scheduler 컨테이너 = DB 권한 보유, task sandbox 아님):
+**자동화됨**: `maint_airflow` DAG(수요일 KST 06:00)의 `db_clean` task 가 docker.sock DooD exec 로 scheduler 컨테이너(`airflow-scheduler-1`)에서 `airflow db clean --clean-before-timestamp <14일전> --skip-archive -y` 를 실행 — `maint_registry` 의 registry GC exec 와 동일 패턴, 신규 인프라 불필요.
+
+수동 fallback (자동 실행 확인·디버깅, 또는 즉시 정리 필요 시) — ops-vm 에서 직접:
 
 ```bash
 ssh ops-vm
 docker compose -f ~/projects/airflow-stack/infra/ops-vm/docker-compose.yml exec -T scheduler \
   airflow db clean --clean-before-timestamp "$(date -u -d '14 days ago' --iso-8601=seconds)" --skip-archive -y
 ```
-
-현재 **수동/필요 시**. 메타 DB 가 disposable·소형(~11MB, 워크로드 없어 거의 안 늘어남)이라 상시 불필요(YAGNI). 고volume 워크로드 도입으로 실제 누적되면 systemd timer + 모니터링(systemd `OnFailure` 알림, 또는 node_exporter textfile → `prometheus.internal` staleness alert)으로 자동화 — 그때 결정.
 
 ## 상태 점검 (Claude / 자동화용)
 

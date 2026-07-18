@@ -1,7 +1,7 @@
 """공용 이미지 빌드+push 헬퍼 — 여러 repo의 배포 DAG가 재사용.
 
-ops 큐(ops-vm edge-worker, docker.sock 마운트)에서 실행되는 @task 콜러블 안에서만
-호출할 것. registry_maintenance.py/worker_vm_maintenance.py 와 동일하게 docker
+ops-vm 큐(ops-vm edge-worker, docker.sock 마운트)에서 실행되는 @task 콜러블 안에서만
+호출할 것. maint_registry.py 와 동일하게 docker
 python SDK(`docker.DockerClient(base_url="unix://var/run/docker.sock")`)를 쓴다 —
 CLI 바이너리 대신 SDK를 쓰는 게 이 repo의 기존 DooD 컨벤션(decisions.md L28).
 
