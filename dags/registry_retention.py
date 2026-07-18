@@ -81,15 +81,34 @@ def prune_repo(base: str, repo: str, keep: int) -> int:
         print(f"  {repo}: {len(tags)} tags <= keep={keep} - skip")
         return 0
 
-    tags_sorted = sorted(tags, key=lambda t: _created_at(base, repo, t), reverse=True)
-    keep_tags, drop_tags = tags_sorted[:keep], tags_sorted[keep:]
+    # 생성일 조회 실패("") 태그는 나이 불명이라 정렬 기준으로 삼을 수 없음 —
+    # drop 후보에서 제외하고 무조건 keep (일시적 fetch 실패로 최신 태그가
+    # 삭제되는 사고 방지).
+    dated = [(tag, _created_at(base, repo, tag)) for tag in tags]
+    undated_tags = [tag for tag, created in dated if not created]
+    known_sorted = sorted(
+        (tc for tc in dated if tc[1]), key=lambda tc: tc[1], reverse=True
+    )
+    keep_tags = undated_tags + [tag for tag, _ in known_sorted[:keep]]
+    drop_tags = [tag for tag, _ in known_sorted[keep:]]
     print(f"  {repo}: {len(tags)} tags -> keep {len(keep_tags)}, drop {len(drop_tags)}")
+
+    # drop 태그와 digest 를 공유하는 keep 태그가 있으면 DELETE 시 keep 태그도
+    # 함께 깨짐 — keep 쪽 digest 를 먼저 확보해 그런 drop 은 skip.
+    keep_digests = {
+        digest
+        for tag in keep_tags
+        if (digest := _manifest_digest(base, repo, tag))
+    }
 
     deleted: set[str] = set()
     count = 0
     for tag in drop_tags:
         digest = _manifest_digest(base, repo, tag)
         if not digest or digest in deleted:
+            continue
+        if digest in keep_digests:
+            print(f"    skip {tag} ({digest[:19]}...) - shared with kept tag")
             continue
         deleted.add(digest)
         status, _, _ = _request("DELETE", f"{base}/v2/{repo}/manifests/{digest}")
