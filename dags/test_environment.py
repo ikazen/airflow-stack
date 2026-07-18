@@ -21,7 +21,7 @@ from lib.alert import notify_discord_on_failure
 )
 def test_environment() -> None:
 
-    @task(queue="ops")
+    @task(queue="ops-vm")
     def main_node_env() -> None:
         import airflow
 

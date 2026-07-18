@@ -27,7 +27,7 @@ x-edge-worker: &edge-worker
 services:
   edge-worker-default:
     <<: *edge-worker
-    command: airflow edge worker --queues default --concurrency 8 --edge-hostname mac-server
+    command: airflow edge worker --queues default,mac-server --concurrency 8 --edge-hostname mac-server
 
   edge-worker-big:
     <<: *edge-worker
