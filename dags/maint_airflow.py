@@ -11,18 +11,17 @@ RETENTION_DAYS = 14
 
 
 @dag(
-    dag_id="maintenance",
+    dag_id="maint_airflow",
     schedule="0 6 * * 3",  # cron 은 start_date tz 기준 — KST 의도면 tz-aware 필수
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     tags=["ops"],
     on_failure_callback=notify_discord_on_failure,
 )
-def maintenance() -> None:
-    # queue="ops": 로그 볼륨이 ops-vm 에 있어 ops 큐에서 실행해야 함
-    # db clean 은 task 불가 (Task SDK 는 DB 접속 안 줌) → runbook.md
+def maint_airflow() -> None:
+    # queue="ops-vm": 로그 볼륨이 ops-vm 에 있어 ops-vm 큐에서 실행해야 함
 
-    @task(queue="ops")
+    @task(queue="ops-vm")
     def cleanup_task_logs(retention_days: int = RETENTION_DAYS) -> int:
         cutoff = pendulum.now("UTC").subtract(days=retention_days).timestamp()
         deleted = 0
@@ -38,4 +37,4 @@ def maintenance() -> None:
     cleanup_task_logs()
 
 
-maintenance()
+maint_airflow()
