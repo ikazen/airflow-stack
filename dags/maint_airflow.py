@@ -9,6 +9,17 @@ from lib.alert import notify_discord_on_failure
 LOG_DIR = Path("/opt/airflow/logs")
 RETENTION_DAYS = 14
 
+# dag_version 제외: Airflow 3.2.1 db clean 이 dag_version 을 task_instance 보다
+# 먼저 지우려다 FK violation 으로 전체 실패함(실측, ForeignKeyViolation on
+# task_instance_dag_version_id_fkey). GitDagBundle 로 DAG 버전이 매 커밋마다
+# 쌓이는 구조라 이 repo 에서 특히 잘 발생 — 상위 apache/airflow 버그 픽스
+# 전까지는 이 테이블만 정리 대상에서 뺀다.
+DB_CLEAN_TABLES = (
+    "_xcom_archive,asset_event,callback_request,celery_taskmeta,celery_tasksetmeta,"
+    "dag_run,deadline,import_error,job,log,revoked_token,sla_miss,task_instance,"
+    "task_instance_history,task_reschedule,trigger,xcom"
+)
+
 
 @dag(
     dag_id="maint_airflow",
@@ -44,7 +55,12 @@ def maint_airflow() -> None:
         client = docker.DockerClient(base_url="unix://var/run/docker.sock")
         cutoff = pendulum.now("UTC").subtract(days=retention_days).to_iso8601_string()
         result = client.containers.get("airflow-scheduler-1").exec_run(
-            ["airflow", "db", "clean", "--clean-before-timestamp", cutoff, "--skip-archive", "-y"]
+            [
+                "airflow", "db", "clean",
+                "--clean-before-timestamp", cutoff,
+                "--tables", DB_CLEAN_TABLES,
+                "--skip-archive", "-y",
+            ]
         )
         output = result.output.decode() if result.output else ""
         print(output)
