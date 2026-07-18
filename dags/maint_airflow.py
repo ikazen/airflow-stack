@@ -34,7 +34,25 @@ def maint_airflow() -> None:
                 d.rmdir()
         return deleted
 
+    # db clean 은 task 프로세스 자체에서 불가 — Task SDK 가 SQL_ALCHEMY_CONN 을 안 줌.
+    # 대신 DooD exec 로 DB 권한을 가진 scheduler 컨테이너에서 실행 (maint_registry
+    # garbage_collect 와 동일 패턴). 수동 fallback 절차는 runbook.md 참조.
+    @task(queue="ops-vm", execution_timeout=pendulum.duration(minutes=10))
+    def db_clean(retention_days: int = RETENTION_DAYS) -> None:
+        import docker
+
+        client = docker.DockerClient(base_url="unix://var/run/docker.sock")
+        cutoff = pendulum.now("UTC").subtract(days=retention_days).to_iso8601_string()
+        result = client.containers.get("airflow-scheduler-1").exec_run(
+            ["airflow", "db", "clean", "--clean-before-timestamp", cutoff, "--skip-archive", "-y"]
+        )
+        output = result.output.decode() if result.output else ""
+        print(output)
+        if result.exit_code != 0:
+            raise RuntimeError(f"db clean failed (exit {result.exit_code})")
+
     cleanup_task_logs()
+    db_clean()
 
 
 maint_airflow()
