@@ -17,6 +17,7 @@ credential 이 필요 없다. public repo clone 도 credential 불필요. privat
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -31,11 +32,16 @@ def build_and_push(
     dockerfile: str,
     image_repo: str,
     tag: str,
+    context_subdir: str = ".",
     private_pat_var: str | None = None,
 ) -> str:
     """repo_url의 ref를 clone → dockerfile로 빌드 → {REGISTRY}/{image_repo}:{tag} push.
 
     반환값: push된 전체 이미지 참조 문자열.
+
+    context_subdir: 빌드 컨텍스트를 repo 루트가 아닌 하위 디렉터리로 지정(예: pot-of-greed
+    ui 이미지는 `ui/`가 컨텍스트). dockerfile 경로는 이 컨텍스트 기준 상대경로다.
+    기본값 "."는 repo 루트 컨텍스트 — 기존 호출부는 인자를 생략해 현행 동작 유지.
     """
     import docker
 
@@ -61,7 +67,7 @@ def build_and_push(
         image_ref = f"{REGISTRY}/{image_repo}:{tag}"
         client = docker.DockerClient(base_url="unix://var/run/docker.sock")
         _, build_logs = client.images.build(
-            path=workdir,
+            path=os.path.join(workdir, context_subdir),
             dockerfile=dockerfile,
             tag=image_ref,
             rm=True,
