@@ -157,6 +157,7 @@ class DockerOperator(_DockerBase):
 | `maint_airflow` | `0 6 * * 3` (수요일 KST 06:00) | ops-vm | 로그 볼륨이 ops-vm 에 있어 반드시 `queue="ops-vm"`. db clean 자동화 포함 |
 | `maint_registry` | `0 4 * * *` (매일 KST 04:00) | ops-vm/worker-vm/mac-server | docker.sock DooD — registry retention+GC+build cache prune(ops-vm) + 노드별 미사용 이미지+build cache prune(worker-vm/mac-server, 168h 보존). 노드별 task 는 서로 독립, 각자 큐에서 병렬 |
 | `test_environment` | `None` (수동) | ops-vm/default/gpu | 3 노드 환경 확인용 |
+| `daily_claude_ping` | `45 7,12,17,22 * * *` (KST) | ops-vm | mac-server claude 키체인 인증 유지용 SSH forced command(10회 재시도 루프). forced command 상세는 `nexus-prime:hosts/mac-server/README.md` |
 
 `maint_airflow` 는 `LOG_DIR=/opt/airflow/logs` 하위 `.log` 파일 14일 초과분 삭제 + `db clean`(DooD exec 로 scheduler 컨테이너에서 실행, 14일 이전 메타 삭제) — 수동 fallback 절차는 `runbook.md` 참조.
 
