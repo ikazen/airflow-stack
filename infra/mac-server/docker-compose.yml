@@ -31,4 +31,4 @@ services:
 
   edge-worker-big:
     <<: *edge-worker
-    command: airflow edge worker --queues gpu,big --concurrency 4 --edge-hostname mac-server-big
+    command: airflow edge worker --queues gpu,big --concurrency 2 --edge-hostname mac-server-big
