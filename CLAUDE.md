@@ -150,6 +150,14 @@ class DockerOperator(_DockerBase):
     template_fields = ("command", "environment", "image")   # image: Variable 기반 태그 템플릿용
 ```
 
+### 도메인 워크로드 (pot-of-greed)
+
+| DAG | 스케줄 | 비고 |
+|---|---|---|
+| `pot_of_greed_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | api+ui 이미지 빌드+push. `ops-vm` 큐 |
+
+`pot_of_greed_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), api(`Dockerfile`, 루트 컨텍스트)+ui(`ui/Dockerfile`, `ui/` 컨텍스트) 두 이미지를 빌드+push. `ops-vm` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼, `context_subdir`로 ui 컨텍스트 지정) — 신규 credential 불필요(public repo clone 무인증, registry 무인증). preflight 없음(app.main이 import 시 env 요구 + host 마운트 env 없음 → 런타임 검증은 cutover 시점 compose `/healthz` healthcheck). 실제 컷오버는 nexus-prime `scripts/release-pog.sh`(compose 태그 bump + SSH 재배포) — reflexion_rondo_deploy와 동일한 build/cutover 분리.
+
 ### 운영 DAG
 
 | DAG | 스케줄 | queue | 비고 |
