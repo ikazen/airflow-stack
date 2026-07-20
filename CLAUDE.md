@@ -114,8 +114,11 @@ bundle 밖 → 해당 호스트 `git pull` + `docker compose -f infra/<host>/doc
 | `sync_matches` | `*/10 * * * *` | default | 없음 | `max_active_runs=1`, `exec_timeout=5m` |
 | `sync_secondary` | `*/15 * * * *` | default | 없음 | `max_active_runs=1`, `exec_timeout=5m` |
 | `daily_meta` | `0 0 * * *` (KST) | default | retries=2, delay=1m, exec_timeout=10m | leagues → [matches, secondary] → report 순서 의존. retries 필수 (mac sleep 대비) |
+| `data_sync_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | ops-vm | 없음 | 이미지 빌드+push+preflight+`data_sync_image_version` Variable bump |
 
-세 DAG 모두 `data_sync_common.py` 의 `IMAGE` 공유. `environment` 는 Airflow Variable 템플릿 (`{{ var.value.db_url }}`, `{{ var.value.db_key }}`).
+세 sync DAG(`sync_matches`/`sync_secondary`/`daily_meta`) 모두 `data_sync_common.py` 의 `IMAGE` 공유. `environment` 는 Airflow Variable 템플릿 (`{{ var.value.db_url }}`, `{{ var.value.db_key }}`).
+
+`data_sync_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), lck-pics(private repo) main을 clone→빌드+push+preflight 후 `data_sync_image_version` Variable bump. `ops-vm` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼, `reflexion_rondo_deploy`/`pot_of_greed_deploy`와 동일 구조). private repo clone은 read-only PAT(Airflow Variable `lck_pics_repo_pat`)로 인증 — `private_pat_var`를 처음 실사용하는 DAG. cutover 별도 단계 없음: Variable bump 직후 다음 sync task 실행부터 새 이미지 적용. 기존 M1 mac `scripts/build-and-push.sh`는 registry/인프라 장애 시 긴급 로컬 빌드용 fallback으로 격하(lck-pics repo `docs/runbook.md` 참고).
 
 `@task.docker` 공통 설정:
 ```python
@@ -179,7 +182,8 @@ class DockerOperator(_DockerBase):
 |---|---|---|
 | `db_url` | lck-pics Supabase URL | sync_matches, sync_secondary, daily_meta |
 | `db_key` | lck-pics Supabase service role key | sync_matches, sync_secondary, daily_meta |
-| `data_sync_image_version` | lck-pics sync task 이미지 태그 | sync_matches, sync_secondary, daily_meta |
+| `data_sync_image_version` | lck-pics sync task 이미지 태그. `data_sync_deploy`가 빌드 직후 bump | sync_matches, sync_secondary, daily_meta |
+| `lck_pics_repo_pat` | lck-pics(private repo) clone용 read-only PAT | data_sync_deploy |
 | `rondo_db_url` | reflexion-rondo DB | reflexion_rondo_cycle |
 | `ollama_base_url` | Ollama API 엔드포인트 | reflexion_rondo_cycle |
 | `ollama_cloud_base_url` | Ollama 클라우드 API 엔드포인트 | reflexion_rondo_cycle |
