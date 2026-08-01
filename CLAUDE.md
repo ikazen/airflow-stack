@@ -63,8 +63,8 @@ T-shirt sizing. edge3 concurrency 는 워커 단위 단일 값 (per-queue 설정
 | queue | 구독 worker | concurrency | 비고 |
 |---|---|---|---|
 | `default` | worker-vm-default, mac-server-default | vm=2, mac=8 | |
-| `big` | worker-vm-big, mac-server-big | vm=1, mac=4(gpu공유) | |
-| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 4(big 공유) | |
+| `big` | worker-vm-big, mac-server-big | vm=1, mac=2(gpu공유) | |
+| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 2(big 공유) | |
 | `ops-vm` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
 | `worker-vm` | worker-vm-default(공동 구독) | 2(default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 | `mac-server` | mac-server-default(공동 구독) | 8(default 공유) | mac-server 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
