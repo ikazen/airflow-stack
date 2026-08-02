@@ -23,6 +23,7 @@ from datetime import timedelta
 
 import pendulum
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowFailException
 from airflow.timetables.trigger import CronTriggerTimetable
 from lib.alert import notify_discord_on_failure
 
@@ -41,6 +42,7 @@ def daily_claude_ping() -> None:
     # retries: mac 완전 sleep 으로 sshd 자체가 응답하지 않는 경우 대비 (daily_meta 와 동일 논리).
     # forced command 자체의 재시도 루프(최대 10*30s)와는 층위가 다름 — 여긴 SSH 접속 자체가 실패하는 경우.
     # execution_timeout 은 재시도 루프 최악 소요시간(~300s)+claude 실행시간을 여유있게 수용.
+    # claude 인증 만료는 재시도로 복구 불가 — AirflowFailException 으로 fast-fail 시켜 retries 미소진.
     @task(queue="ops-vm", retries=2, retry_delay=timedelta(minutes=2), execution_timeout=timedelta(minutes=12))
     def send_ping() -> None:
         host = os.environ["CLAUDE_SSH_HOST"]
@@ -71,7 +73,11 @@ def daily_claude_ping() -> None:
             os.remove(key_path)
 
         if result.returncode != 0:
-            raise RuntimeError(f"ssh rc={result.returncode} stderr={result.stderr[:500]}")
+            combined = f"{result.stdout}{result.stderr}"
+            msg = f"ssh rc={result.returncode} stderr={result.stderr[:500]}"
+            if "Not logged in" in combined or "Please run /login" in combined:
+                raise AirflowFailException(f"claude 인증 만료 — mac-server 재로그인 필요: {msg}")
+            raise RuntimeError(msg)
         print(f"[claude] {result.stdout.strip()}")
 
     send_ping()
