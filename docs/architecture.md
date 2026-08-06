@@ -8,7 +8,7 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 |---|---|
 | ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops (`ops-vm` c=2) |
 | worker-vm | edge-worker-default (`default` c=2, `--edge-hostname worker-vm`) / edge-worker-big (`big` c=1, `--edge-hostname worker-vm-big`) |
-| mac-server | edge-worker-default (`default` c=8, `--edge-hostname mac-server`) / edge-worker-big (`gpu,big` c=4, `--edge-hostname mac-server-big`) |
+| mac-server | edge-worker-default (`default` c=8, `--edge-hostname mac-server`) / edge-worker-big (`gpu,big` c=2, `--edge-hostname mac-server-big`) |
 
 한 노드에 두 워커 (T-shirt sizing, `decisions.md` R5). edge3 concurrency 는 워커 단위 단일 값이라 사이즈별 cap 차등은 워커 프로세스 분리로만. `network_mode: host` 라 hostname 지시어 충돌 → `--edge-hostname` 으로 워커 이름 구분.
 
@@ -26,8 +26,8 @@ Airflow 3.2.x workload. Edge Executor 기반. 인프라 (호스트·네트워크
 | queue | 구독 worker | concurrency | 라우팅 |
 |---|---|---|---|
 | `default` | worker-vm / mac-server | vm=2, mac=8 | 미지정 task 의 기본 |
-| `big` | worker-vm-big / mac-server-big | vm=1, mac=4 | heavy task 명시 opt-in (`queue="big"`) |
-| `gpu` | mac-server-big (`gpu,big` 공동 구독) | 4 (big 공유) | `queue="gpu"` 명시. GPU / Neural Engine. M1 가용성 가정 금지 |
+| `big` | worker-vm-big / mac-server-big | vm=1, mac=2 | heavy task 명시 opt-in (`queue="big"`) |
+| `gpu` | mac-server-big (`gpu,big` 공동 구독) | 2 (big 공유) | `queue="gpu"` 명시. GPU / Neural Engine. M1 가용성 가정 금지 |
 | `ops-vm` | ops-vm | 2 | control-plane 작업 전용 (ops-vm 은 `default` 미구독) |
 | `worker-vm` | worker-vm-default (공동 구독) | 2 (default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 | `mac-server` | mac-server-default (공동 구독) | 8 (default 공유) | mac-server 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
@@ -53,7 +53,7 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 | `reflexion_rondo_cycle` | `None` (daemon이 trigger) | default/big | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
 | `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm | `max_active_runs=1`, `retries=1`, `exec_timeout=5m`. best CV 개선 시만 Kaggle 자동 제출 |
 
-`reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big) → promote(default). Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
+`reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big) → promote(big). promote도 `_DOCKER_HEAVY`(`dags/reflexion_rondo_cycle.py`)를 써서 attempt와 같은 `big` 큐를 공유한다 — attempt 3개가 전부 끝난 뒤 순차 실행이라 동시 점유는 없다. Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
 
 `reflexion_rondo_autosubmit`: Docker 없음. daemon `POST /api/submissions/auto` 직접 HTTP 호출 (`http://rondo-api.internal` 하드코딩).
 
