@@ -45,7 +45,13 @@ _DOCKER_BASE = dict(
 )
 
 _DOCKER_LIGHT = dict(**_DOCKER_BASE, queue="default", cpus=0.5)
-_DOCKER_HEAVY = dict(**_DOCKER_BASE, queue="big", cpus=1.5)
+# mem_limit: reflexion-rondo/runtime/isolate.py의 RSS 워치독(EVAL_RSS_LIMIT_BYTES
+# 기본 4GiB)이 1차 방어선이고 이건 백스톱이다 — 워치독이 폴링 주기(2초) 사이에
+# 놓친 급격한 단일 allocation이 있어도 kill 범위를 이 컨테이너로 한정해 같은
+# 호스트의 omnigent/Postgres 등 다른 프로세스가 커널 OOM killer에 말려드는 걸
+# 막는다(2026-08 실측: rc=-9가 계산시간의 37%를 태움, 백스톱 부재가 원인 중 하나).
+# 워치독 한도보다 높게 잡아야 워치독이 먼저 죽여 원인이 명시된 에러를 남긴다.
+_DOCKER_HEAVY = dict(**_DOCKER_BASE, queue="big", cpus=1.5, mem_limit="5g")
 
 _ENV = {
     "PYTHONUNBUFFERED":        "1",
