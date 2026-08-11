@@ -116,10 +116,14 @@ def reflexion_rondo_cycle() -> None:
         environment=_ENV,
         # BON-257: PROMOTE_CONFIRM_SEEDS 3개(BON-247로 42 제거 후) × baseline+candidate
         # 2회 eval = 6회 + holdout 1회 + merge-verify 1회(BON-256) = 최대 8회
-        # eval_isolated 호출. reflexion-rondo runtime/isolate.py DEFAULT_TIMEOUT=600s
-        # 기준 worst-case 8*600s=4800s=80분. 45분으로는 큰 데이터셋에서 못 버틴다 —
-        # 80분 worst-case + reflect 루프/materialize 오버헤드 여유를 둬 100분으로 상향.
-        execution_timeout=timedelta(minutes=100),
+        # eval_isolated 호출. reflexion-rondo #166/#167/#168이 confirm 게이트에
+        # negative memo + baseline 캐시를 추가해 평균 소요는 크게 줄었지만(실측
+        # p95 11.8m 이하로 목표), 캐시는 best-effort(TTL 만료·best_source 변경 시
+        # miss)라 이론상 worst-case는 그대로다. reflexion-rondo runtime/isolate.py
+        # DEFAULT_TIMEOUT=1200s(이 주석은 과거 600s 기준으로 계산돼 실제값과
+        # 어긋나 있었다 — issue #34) 기준 worst-case 8*1200s=9600s=160분.
+        # reflect 루프/materialize 오버헤드 여유를 둬 180분으로 상향.
+        execution_timeout=timedelta(minutes=180),
         trigger_rule="all_done",
         **_DOCKER_HEAVY,
     )
