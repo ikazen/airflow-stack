@@ -31,8 +31,12 @@ services:
 
   edge-worker-big:
     <<: *edge-worker
-    # concurrency 2 -> 1(reflexion-rondo#202): Colima VM 자체가 4vCPU라 attempt 2개가 동시에
-    # 뜨면 서로 나눠 쓴다. DockerOperator의 cpus=1.5는 cpu_shares일 뿐 하드캡이 아니라서
-    # (docs/decisions.md ADR-029, docker inspect 실측 CpuQuota=0) 숫자를 올려도 무의미하고,
-    # 실제 레버는 동시 실행 개수를 줄여 VM을 독점시키는 것뿐이다.
-    command: airflow edge worker --queues gpu,big --concurrency 1 --edge-hostname mac-server-big
+    # concurrency 1 -> 2(reflexion-rondo#216, #202의 후속). #202가 4vCPU VM에서
+    # concurrency 2로 인한 CPU 경합을 잡으려 1로 낮췄는데, adversarial review에서 이게
+    # fleet 전체 big 슬롯을 3(worker-vm 1 + mac-server 2)에서 2로 줄여 매 super-cycle의
+    # 3번째 attempt(그 사이클 bandit이 가장 덜 선호한 탐색 슬롯)가 슬롯을 못 얻어
+    # 구조적으로 매번 배제되는 부작용을 낳는 걸 확인했다. Colima VM을 4->6vCPU/16->20GB로
+    # 먼저 키워(nexus-prime:hosts/mac-server/README.md) attempt당 실제 코어를 늘린
+    # 뒤에 되돌리는 것 — #202가 고치려던 경합(기존 4vCPU/2=2코어)보다 지금은 여유가
+    # 크다(6vCPU/2=3코어).
+    command: airflow edge worker --queues gpu,big --concurrency 2 --edge-hostname mac-server-big
