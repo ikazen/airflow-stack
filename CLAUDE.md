@@ -137,7 +137,10 @@ force_pull=False
 | `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm 큐 단일 task, `max_active_runs=1` |
 | `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops-vm` 큐 |
 
-`reflexion_rondo_cycle`: `conf` 주입 `{competition_id, stage, queue_id}`. 태스크: `retrieve`(default) → `attempt_0/1/2`(big) → `promote`(default).
+`reflexion_rondo_cycle`: `conf` 주입 `{competition_id, stage, queue_id}`. 태스크: `retrieve`(default) →
+`attempt_0/1/2`(big, leaf) 및 `retrieve` → `attempt_gate`(default) → `promote`(big). `promote`(default)
+표기는 오타였음 — 실제는 `big`. `attempt_gate`는 reflexion-rondo#203 — attempt 3개 전부가 아니라
+raw.attempts에 2개 이상 쌓이면(또는 grace/max_wait 데드라인) promote를 바로 진행시킨다.
 `network_mode="host"` (lck-pics 와 달리 bridge 아님).
 시크릿은 `.env` 마운트 없이 Airflow Variable 로 주입: `rondo_db_url`, `ollama_base_url`, `ollama_cloud_base_url`, `ollama_api_key`, `minio_endpoint`.
 task 이미지 태그도 Variable(`rondo_task_image_version`) — git 하드코딩 아님(issue #2, decisions L29). `reflexion_rondo_deploy` DAG가 빌드 직후 bump.
