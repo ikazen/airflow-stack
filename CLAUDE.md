@@ -24,7 +24,7 @@ Airflow 3.2.x self-host. Claude 세션 컨벤션. 사용자 글로벌 `~/.claude
 |---|---|---|
 | ops-vm | api-server / scheduler / dag-processor / triggerer / edge-worker-ops(`ops-vm` c=2, docker.sock 마운트) | `infra/ops-vm/docker-compose.yml` |
 | worker-vm | edge-worker-default(`default` c=2) / edge-worker-big(`big` c=1) | `infra/worker-vm/docker-compose.yml` |
-| mac-server | edge-worker-default(`default` c=8) / edge-worker-big(`gpu,big` c=1) | `infra/mac-server/docker-compose.yml` |
+| mac-server | edge-worker-default(`default` c=8) / edge-worker-big(`gpu,big` c=2) | `infra/mac-server/docker-compose.yml` |
 
 - ops-vm edge-worker 는 같은 compose 안에서 api-server 에 내부 주소로 직결: `http://api-server:8080/edge_worker/v1/rpcapi`
 - worker-vm / mac-server 는 Tailscale 직결 (`AIRFLOW__EDGE__API_URL` = `http://<oci-ops-tailnet-ip>:8080/edge_worker/v1/rpcapi`)
@@ -63,8 +63,8 @@ T-shirt sizing. edge3 concurrency 는 워커 단위 단일 값 (per-queue 설정
 | queue | 구독 worker | concurrency | 비고 |
 |---|---|---|---|
 | `default` | worker-vm-default, mac-server-default | vm=2, mac=8 | |
-| `big` | worker-vm-big, mac-server-big | vm=1, mac=1(gpu공유) | |
-| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 1(big 공유) | |
+| `big` | worker-vm-big, mac-server-big | vm=1, mac=2(gpu공유) | |
+| `gpu` | mac-server-big(`gpu,big` 공동 구독) | 2(big 공유) | |
 | `ops-vm` | ops-vm edge-worker-ops | 2 | privileged 인프라 유지보수 전용 (docker.sock 마운트 — 일반 워크로드 라우팅 금지) |
 | `worker-vm` | worker-vm-default(공동 구독) | 2(default 공유) | worker-vm 전용 docker prune. 호스트 타겟 보장용 전용 큐 |
 | `mac-server` | mac-server-default(공동 구독) | 8(default 공유) | mac-server 전용 docker prune. 호스트 타겟 보장용 전용 큐 |

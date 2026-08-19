@@ -53,7 +53,13 @@ cap = admission(슬롯 수). 실제 리소스 상한은 `@task.docker` `mem_limi
 | `reflexion_rondo_cycle` | `None` (daemon이 trigger) | default/big | `max_active_runs=4`, `conf={competition_id, stage, queue_id}` |
 | `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm | `max_active_runs=1`, `retries=1`, `exec_timeout=5m`. best CV 개선 시만 Kaggle 자동 제출 |
 
-`reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big) → promote(big). promote도 `_DOCKER_HEAVY`(`dags/reflexion_rondo_cycle.py`)를 써서 attempt와 같은 `big` 큐를 공유한다 — attempt 3개가 전부 끝난 뒤 순차 실행이라 동시 점유는 없다. Airflow Variables 로 자격증명 주입 (`rondo_db_url` 등). `network_mode="host"`.
+`reflexion_rondo_cycle`: retrieve(default) → attempt_0/1/2(big, leaf 아님 — 각자 뒤에
+attempt_i_absorb leaf 붙음, reflexion-rondo#213) 및 retrieve → attempt_gate(default,
+reflexion-rondo#203) → promote(big). promote도 `_DOCKER_HEAVY`(`dags/reflexion_rondo_cycle.py`)를
+써서 attempt와 같은 `big` 큐를 공유한다 — attempt_gate가 attempt 2개 이상(성공 기준,
+reflexion-rondo#214) 쌓이면 3개 전부를 안 기다리고 promote를 진행시키므로, promote가 아직
+도는 attempt와 `big` 슬롯을 실제로 다툴 수 있다(동시 점유 있음). Airflow Variables로
+자격증명 주입(`rondo_db_url` 등). `network_mode="host"`.
 
 `reflexion_rondo_autosubmit`: Docker 없음. daemon `POST /api/submissions/auto` 직접 HTTP 호출 (`http://rondo-api.internal` 하드코딩).
 
