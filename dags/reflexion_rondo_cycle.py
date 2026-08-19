@@ -2,15 +2,22 @@
 
 DAG conf: {competition_id, stage, queue_id}
 1 DAG run = 1 super-cycle:
-  retrieve → [attempt_0, attempt_1, attempt_2] → promote
+  retrieve → [attempt_0, attempt_1, attempt_2]  (leaf, 취소하지 않고 45분까지 그대로 돔)
+  retrieve → attempt_gate → promote
 
-daemon이 큐에서 아이템을 꺼내 trigger하고, DAG 완료 후 DB에서 결과를 읽는다.
+daemon이 큐에서 아이템을 꺼내 trigger하고, promote task 완료 후 DB에서 결과를 읽는다
+(reflexion-rondo#204 — daemon은 더 이상 DAG run 전체가 아니라 promote 하나만 기다린다).
 시크릿은 Airflow Variable로 주입 (var.value.xxx) — .env 마운트 없음.
 
 BON-237: 모든 task에 `--run-id {{ run_id }}` 전달 — raw.super_cycle_context의
-조회/삭제 키. queue_id는 같은 super-cycle의 여러 cycle(dag run)이 공유해서
-(max_active_runs=4) 동시 실행 시 서로의 context row를 덮어쓰거나 훔쳐 지우는
-레이스가 있었다. run_id(Airflow dag_run_id)는 cycle마다 유일해서 안전하다.
+조회 키. queue_id는 같은 super-cycle의 여러 cycle(dag run)이 공유해서
+(max_active_runs=4) 동시 실행 시 서로의 context row를 덮어쓰는 레이스가 있었다.
+run_id(Airflow dag_run_id)는 cycle마다 유일해서 안전하다.
+
+reflexion-rondo#203: attempt_gate가 promote를 attempt_0/1/2 3개 전부가 아니라
+raw.attempts에 2개 이상 쌓일 때(또는 grace/max_wait 데드라인)까지만 기다리게 한다 —
+2026-08 실측으로 가장 늦게 끝나는 attempt는 승격률 25.9%(균등확률보다 낮음)·에러율
+41.6%로 대기가 대부분 실패를 기다리는 것이었다. attempt_i 자신은 취소하지 않는다.
 """
 from __future__ import annotations
 
@@ -105,6 +112,25 @@ def reflexion_rondo_cycle() -> None:
         for i in range(3)
     ]
 
+    attempt_gate = DockerOperator(
+        task_id="attempt_gate",
+        command=(
+            "uv run --no-sync python -m bin.run_attempt_gate_task"
+            " --run-id {{ run_id }}"
+            " --expected 3 --min-done 2"
+        ),
+        environment={
+            **_ENV,
+            "RONDO_GATE_GRACE_SEC":    "{{ var.value.get('rondo_gate_grace_sec', '900') }}",
+            "RONDO_GATE_MAX_WAIT_SEC": "{{ var.value.get('rondo_gate_max_wait_sec', '3000') }}",
+        },
+        # attempt execution_timeout(45분=2700s)보다 위 — gate 자신의 max_wait(기본
+        # 3000s=50분)를 절대 못 채우고 컨테이너가 먼저 죽는 일이 없게 여유를 둔다.
+        execution_timeout=timedelta(minutes=55),
+        retries=1,
+        **_DOCKER_LIGHT,
+    )
+
     promote = DockerOperator(
         task_id="promote",
         command=(
@@ -128,7 +154,8 @@ def reflexion_rondo_cycle() -> None:
         **_DOCKER_HEAVY,
     )
 
-    retrieve >> attempts >> promote
+    retrieve >> attempts  # attempt_i는 leaf — 취소하지 않고 각자 execution_timeout까지 돈다
+    retrieve >> attempt_gate >> promote
 
 
 reflexion_rondo_cycle()
