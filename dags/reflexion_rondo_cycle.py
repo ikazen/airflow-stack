@@ -2,8 +2,12 @@
 
 DAG conf: {competition_id, stage, queue_id}
 1 DAG run = 1 super-cycle:
-  retrieve → [attempt_0, attempt_1, attempt_2]  (leaf, 취소하지 않고 45분까지 그대로 돔)
-  retrieve → attempt_gate → promote
+  retrieve → [attempt_0, attempt_1, attempt_2] → [attempt_0_absorb, ..._absorb]  (leaf)
+  retrieve → attempt_gate → promote  (leaf)
+
+attempt_i 자신은 취소하지 않고 45분까지 그대로 돈다. DagRun의 진짜 leaf는 attempt_i가
+아니라 attempt_i_absorb(trigger_rule=all_done, #213) — attempt_i가 타임아웃/크래시해도
+DagRun 상태(및 Discord on_failure_callback)에 반영되지 않는다.
 
 daemon이 큐에서 아이템을 꺼내 trigger하고, promote task 완료 후 DB에서 결과를 읽는다
 (reflexion-rondo#204 — daemon은 더 이상 DAG run 전체가 아니라 promote 하나만 기다린다).
@@ -112,6 +116,25 @@ def reflexion_rondo_cycle() -> None:
         for i in range(3)
     ]
 
+    # attempt_i를 DagRun의 진짜 leaf로 두면 Airflow가 DagRun 상태를 attempt_i 자신의
+    # 성패로도 결정해버린다 — attempt가 45분 execution_timeout에 걸리거나 하드
+    # 크래시하면(#213, reflexion-rondo#213) promote가 이미 승격까지 끝냈어도 DagRun
+    # 전체가 failed로 뒤집힌다. trigger_rule="all_done" 흡수 task를 진짜 leaf로 세워
+    # attempt_i의 실패가 DagRun 상태 계산에 반영되지 않게 한다. 무거운 rondo 이미지를
+    # 그대로 재사용하되 명령은 즉시 종료하는 no-op — 기존 DockerOperator 배관을
+    # 그대로 쓰는 게 검증 안 된 새 패턴(@task 등)보다 안전하다.
+    attempt_absorbers = [
+        DockerOperator(
+            task_id=f"attempt_{i}_absorb",
+            command="true",
+            environment={},
+            trigger_rule="all_done",
+            execution_timeout=timedelta(minutes=5),
+            **_DOCKER_LIGHT,
+        )
+        for i in range(3)
+    ]
+
     attempt_gate = DockerOperator(
         task_id="attempt_gate",
         command=(
@@ -154,7 +177,12 @@ def reflexion_rondo_cycle() -> None:
         **_DOCKER_HEAVY,
     )
 
-    retrieve >> attempts  # attempt_i는 leaf — 취소하지 않고 각자 execution_timeout까지 돈다
+    # attempt_i 자신은 leaf가 아니다 — 취소하지 않고 각자 execution_timeout까지 돈다.
+    # DagRun의 진짜 leaf는 attempt_absorb_i(#213) — attempt_i의 성패가 DagRun 상태에
+    # 반영되지 않게 한다.
+    retrieve >> attempts
+    for a, absorb in zip(attempts, attempt_absorbers):
+        a >> absorb
     retrieve >> attempt_gate >> promote
 
 
