@@ -31,4 +31,8 @@ services:
 
   edge-worker-big:
     <<: *edge-worker
-    command: airflow edge worker --queues gpu,big --concurrency 2 --edge-hostname mac-server-big
+    # concurrency 2 -> 1(reflexion-rondo#202): Colima VM 자체가 4vCPU라 attempt 2개가 동시에
+    # 뜨면 서로 나눠 쓴다. DockerOperator의 cpus=1.5는 cpu_shares일 뿐 하드캡이 아니라서
+    # (docs/decisions.md ADR-029, docker inspect 실측 CpuQuota=0) 숫자를 올려도 무의미하고,
+    # 실제 레버는 동시 실행 개수를 줄여 VM을 독점시키는 것뿐이다.
+    command: airflow edge worker --queues gpu,big --concurrency 1 --edge-hostname mac-server-big
