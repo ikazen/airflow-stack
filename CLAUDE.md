@@ -136,6 +136,7 @@ force_pull=False
 | `reflexion_rondo_cycle` | `schedule=None` (daemon이 trigger) | `max_active_runs=4` |
 | `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm 큐 단일 task, `max_active_runs=1` |
 | `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops-vm` 큐 |
+| `reflexion_rondo_tune` | `schedule=None` (수동, `{"competition", "n_trials", "timeout_sec"}`) | reflexion-rondo#230 — Optuna 튜닝, 900s attempt 예산 밖. `big` 큐, `execution_timeout=4h`, `mem_limit=6g` |
 
 `reflexion_rondo_cycle`: `conf` 주입 `{competition_id, stage, queue_id}`. 태스크: `retrieve`(default) →
 `attempt_0/1/2`(big, leaf) 및 `retrieve` → `attempt_gate`(default) → `promote`(big). `promote`(default)
@@ -149,6 +150,13 @@ task 이미지 태그도 Variable(`rondo_task_image_version`) — git 하드코�
 daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
 
 `reflexion_rondo_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), daemon+task 이미지 빌드+push+사전검증 후 task Variable bump. `ops-vm` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼) — 신규 credential 불필요(public repo clone 무인증, registry 무인증).
+
+`reflexion_rondo_tune`: 수동 트리거(`{"competition": "s4e10", "n_trials": 100, "timeout_sec": 3600}`,
+`n_trials`/`timeout_sec` 생략 시 `bin/tune_pipeline.py` 기본값). confirmed pipeline의
+model_spec/ensemble_spec 멤버를 Optuna로 탐색 — attempt와 동일 이미지·환경, `big` 큐지만
+900s attempt 예산이 적용 안 되는 별도 레인(`execution_timeout=4h`). `runtime/isolate.py`의
+RSS 워치독을 거치지 않고 in-process로 돌아 컨테이너 `mem_limit=6g`가 유일한 메모리 백스톱
+(reflexion-rondo decisions.md ADR-035).
 
 DockerOperator 를 직접 사용 (템플릿이 필요해 `@task.docker` 대신):
 ```python
