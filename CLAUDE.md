@@ -134,7 +134,7 @@ force_pull=False
 | DAG | 스케줄 | 비고 |
 |---|---|---|
 | `reflexion_rondo_cycle` | `schedule=None` (daemon이 trigger) | `max_active_runs=4` |
-| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm 큐 단일 task, `max_active_runs=1` |
+| `reflexion_rondo_autosubmit` | `0 6 * * *` (KST 06:00) | ops-vm 큐, `max_active_runs=1`. leaderboard 갱신 → 제출 → 폴링 3 task |
 | `reflexion_rondo_deploy` | `schedule=None` (수동, `{"tag": "vX.Y.Z"}`) | daemon+task 이미지 빌드+push+사전검증+task Variable bump. `ops-vm` 큐 |
 | `reflexion_rondo_tune` | `schedule=None` (수동, `{"competition", "n_trials", "timeout_sec"}`) | reflexion-rondo#230 — Optuna 튜닝, 900s attempt 예산 밖. `big` 큐, `execution_timeout=4h`, `mem_limit=6g` |
 
@@ -146,8 +146,11 @@ raw.attempts에 2개 이상 쌓이면(또는 grace/max_wait 데드라인) promot
 시크릿은 `.env` 마운트 없이 Airflow Variable 로 주입: `rondo_db_url`, `ollama_base_url`, `ollama_cloud_base_url`, `ollama_api_key`, `minio_endpoint`.
 task 이미지 태그도 Variable(`rondo_task_image_version`) — git 하드코딩 아님(issue #2, decisions L29). `reflexion_rondo_deploy` DAG가 빌드 직후 bump.
 
-`reflexion_rondo_autosubmit`: 최근 24h cycle 실행 대회 중 best CV 개선 시에만 Kaggle 자동 제출.
-daemon `POST /api/submissions/auto` 를 HTTP 호출 (Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
+`reflexion_rondo_autosubmit`: `ACTIVE=True` 대회별 일일 예산 안에서 아직 제출 안 한 confirmed pipeline을
+cv 상위순 자동 제출(reflexion-rondo ADR-038, #233). 그 앞에 `refresh_leaderboards` task가 LB 점수 분포
+스냅샷을 갱신해 `lb_percentile`(북극성 지표) 계산 근거를 만든다 — 실패해도 제출을 막지 않는다.
+daemon `POST /api/leaderboard/refresh` + `POST /api/submissions/auto` 를 HTTP 호출
+(Docker 없음 — `http://rondo-daemon:8000` nexus 서비스명 직결).
 
 `reflexion_rondo_deploy`: 수동 트리거(`{"tag": "vX.Y.Z"}`), daemon+task 이미지 빌드+push+사전검증 후 task Variable bump. `ops-vm` 큐 docker.sock 재사용(`dags/lib/image_deploy.py` 공용 헬퍼) — 신규 credential 불필요(public repo clone 무인증, registry 무인증).
 
