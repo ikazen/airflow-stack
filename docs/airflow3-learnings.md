@@ -99,7 +99,7 @@ sleep 중 task 실행 → 깨어남 → 두 갈래로 깨짐:
 
 ### 해결 (3겹)
 
-1. **wake 훅** (`sleepwatcher` + `~/.wakeup`): 깨어날 때 자동 `docker compose up -d --force-recreate edge-worker`. 사람 개입 제거.
+1. **wake 훅** (`sleepwatcher` + `~/.wakeup`): 깨어날 때 자동 `docker compose up -d --force-recreate edge-worker-default edge-worker-big`. 사람 개입 제거.
 2. **drain 빠른 종료** — (B)의 핵심: `AIRFLOW__EDGE__DRAIN_TIMEOUT_SEC=10` + `DRAIN_KILL_GRACE_SEC=5` + compose `stop_grace_period: 30s`. force-recreate 의 SIGTERM → drain 10s → 남은 좀비 job SIGTERM, 5s 뒤 SIGKILL → job 비워짐 → 루프 탈출 → **`OFFLINE` 깨끗이 찍고 종료** → 새 worker 가 register 할 때 기존 row 가 OFFLINE → 즉시 허용 → idle. crash loop·150s 대기 소멸.
    - `stop_grace_period` 가 drain 총시간(10+5)보다 짧으면 docker 가 먼저 SIGKILL → 다시 terminating 박제. 그래서 grace 를 길게(30s).
 3. **retries** (DAG): reconcile 된 좀비 task 가 재실행되도록. 손실 치명적 DAG(`daily_meta`)만 — 잦은 DAG(`sync_*`)는 다음 발화가 흡수.

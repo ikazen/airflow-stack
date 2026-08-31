@@ -66,7 +66,7 @@ mac sleep 중이던 task 가 깨어나면 좀비가 되고 worker 가 wedge 됨 
 export DOCKER_HOST="unix:///Users/<your-user>/.colima/default/docker.sock"
 COMPOSE=/Users/<your-user>/projects/airflow-stack/infra/mac-server
 for i in $(seq 1 30); do /opt/homebrew/bin/docker info >/dev/null 2>&1 && break; sleep 2; done
-/opt/homebrew/bin/docker compose -f "$COMPOSE/docker-compose.yml" --env-file "$COMPOSE/.env" up -d --force-recreate edge-worker
+/opt/homebrew/bin/docker compose -f "$COMPOSE/docker-compose.yml" --env-file "$COMPOSE/.env" up -d --force-recreate edge-worker-default edge-worker-big
 ```
 ```
 chmod +x ~/.wakeup

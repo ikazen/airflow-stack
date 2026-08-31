@@ -41,6 +41,6 @@ psql -d airflow -c "SELECT task_id, state FROM edge_job WHERE edge_worker='mac-s
 
 > 주의: Airflow 2.x 의 `scheduler_zombie_task_threshold` 는 3 에서 `task_instance_heartbeat_timeout` 로 개명. 옛 키·`task_heartbeat_sec` 는 효과 없음.
 
-**해결 (wedge 된 worker)**: 재등록은 기존 row 가 `OFFLINE`/`UNKNOWN` 일 때만 허용 (그 외엔 409). 빠른 `docker restart` 연타는 `restart:unless-stopped` 와 경합해 `last_update` 를 계속 갱신 → 150s 를 못 채우는 self-inflicted crash loop. 올바른 복구: `up -d --force-recreate edge-worker` (idle/도달가능 worker 는 graceful SIGTERM 으로 deregister → 즉시 재등록).
+**해결 (wedge 된 worker)**: 재등록은 기존 row 가 `OFFLINE`/`UNKNOWN` 일 때만 허용 (그 외엔 409). 빠른 `docker restart` 연타는 `restart:unless-stopped` 와 경합해 `last_update` 를 계속 갱신 → 150s 를 못 채우는 self-inflicted crash loop. 올바른 복구: `up -d --force-recreate edge-worker-default edge-worker-big` (idle/도달가능 worker 는 graceful SIGTERM 으로 deregister → 즉시 재등록).
 
 **재발 방지**: wake 자동 복구(`sleepwatcher` + `~/.wakeup`) + 손실 치명적 DAG 의 `retries` — `setup.md` 참조.
