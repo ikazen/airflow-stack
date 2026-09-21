@@ -1,13 +1,12 @@
 """reflexion-rondo Optuna 튜닝 DAG — #230, 900s attempt CPU 예산 밖 별도 레인.
 
 dag_run.conf: {"competition": "s4e10", "n_trials": 100, "timeout_sec": 3600}
-n_trials/timeout_sec 생략 시 bin/tune_pipeline.py 기본값(100 trial, 무제한 timeout — DAG의
-execution_timeout이 바깥 상한).
+n_trials/timeout_sec 생략 시 bin/tune_pipeline.py 기본값(100 trial, timeout은 TUNE_TIMEOUT_SEC=10800s —
+baseline 평가와 모든 멤버를 합친 런 전체 예산). DAG의 execution_timeout이 바깥 상한이다.
 
-reflexion_rondo_cycle.py의 attempt 컨테이너와 동일한 이미지·환경을 재사용한다 —
-확정 pipeline 소스를 exec하는 신뢰 경계가 attempt 평가와 같으므로(decisions.md ADR-035),
-별도 이미지를 만들 이유가 없다. 수동 트리거 전용 — daemon이나 다른 DAG가 자동으로 호출하지
-않는다(#230 범위: 코어 튜닝 기능 + 수동 실행 경로, 자동 스케줄링은 #233/#236에서 실측 후 결정).
+reflexion_rondo_cycle.py의 attempt 컨테이너와 동일한 이미지·환경을 재사용한다 — 확정 pipeline 소스를 exec하는
+신뢰 경계가 attempt 평가와 같으므로(decisions.md ADR-035), 별도 이미지를 만들 이유가 없다. reflexion-rondo daemon이
+승격 직후와 48h idle 스윕에서 자동 트리거하고(reflexion-rondo#318), 수동 트리거도 가능하다.
 """
 from __future__ import annotations
 
@@ -73,10 +72,9 @@ def reflexion_rondo_tune() -> None:
         # 데이터가 최대 70만 행급) — reflexion-rondo#31과 동일한 이유의 백스톱.
         mem_limit="6g",
         # attempt(900s)와 달리 여기는 그 예산 밖이 핵심 요구사항(#230 배경) — n_trials가
-        # 크거나 데이터가 크면 수십 분~수 시간 걸릴 수 있다. execution_timeout이 진짜
-        # 바깥 상한(bin/tune_pipeline.py --timeout-sec는 멤버/모델 1개당 상한이라 ensemble
-        # 멤버 여러 개면 그 합만큼 걸릴 수 있음 — 호출 시 n_trials/timeout_sec를 대회
-        # 데이터 크기에 맞게 신중히 설정할 것).
+        # 크거나 데이터가 크면 수십 분~수 시간 걸릴 수 있다. execution_timeout이 진짜 바깥 상한이고,
+        # bin/tune_pipeline.py --timeout-sec(기본 3h)는 앙상블 멤버 전체를 합친 런 예산이라 이 값보다
+        # 작게 둬야 결과가 저장된다(reflexion-rondo#350).
         execution_timeout=timedelta(hours=4),
     )
 
