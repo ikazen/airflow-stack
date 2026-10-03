@@ -39,7 +39,7 @@ _ENV = {
     schedule=None,
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
-    max_active_runs=2,
+    max_active_runs=1,  # big 슬롯 3개 중 튜닝이 점유하는 수를 1개로 제한 — 2개면 attempt가 큐 대기로 굶는다(reflexion-rondo#471)
     tags=["rondo"],
     on_failure_callback=notify_discord_on_failure,
 )
