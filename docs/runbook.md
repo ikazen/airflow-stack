@@ -47,6 +47,9 @@ Airflow Variables 로 task 자격증명 주입 (Connections 미사용). `airflow
 | `rondo_model_reflector` | rondo reflector LLM 모델명 |
 | `rondo_model_embedding` | rondo embedding 모델명 |
 | `rondo_task_image_version` | reflexion-rondo task 이미지 태그(예: `v1.2.27`). `reflexion_rondo_deploy` DAG가 빌드 후 bump — git push 아님, 즉시 반영(decisions.md L29) |
+| `rondo_attempts_per_cycle` | `reflexion_rondo_cycle`의 cycle당 attempt 수(기본 3, reflexion-rondo#520). DAG 파싱 시 조회라 파서 주기(30초) 안에 반영된다. `big` 슬롯이 fleet 3개라 5를 넘기면 대기만 늘어난다. 켤 때는 `rondo_gate_min_done`·`rondo_gate_grace_sec`를 함께 조정한다 |
+| `rondo_gate_min_done` | attempt_gate quorum(성공 attempt 수, 기본 2). attempt 수를 5로 올리면 3 |
+| `rondo_gate_grace_sec` | attempt_gate가 첫 결과 후 기다리는 시간(기본 900초). attempt 수 5는 2파로 돌아 1500 권장 |
 | `data_sync_image_version` | lck-pics data-sync 이미지 태그(예: `v0.1.0`). `data_sync_deploy` DAG가 빌드 후 bump — git push 아님, 즉시 반영 |
 | `lck_pics_repo_pat` | lck-pics(private repo) clone용 read-only PAT(GitHub fine-grained, Contents:Read-only). `data_sync_deploy` clone 인증에 사용 |
 

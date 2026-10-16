@@ -22,13 +22,16 @@ reflexion-rondo#203: attempt_gate가 promote를 attempt_0/1/2 3개 전부가 아
 raw.attempts에 2개 이상 쌓일 때(또는 grace/max_wait 데드라인)까지만 기다리게 한다 —
 2026-08 실측으로 가장 늦게 끝나는 attempt는 승격률 25.9%(균등확률보다 낮음)·에러율
 41.6%로 대기가 대부분 실패를 기다리는 것이었다. attempt_i 자신은 취소하지 않는다.
+
+reflexion-rondo#520: attempt 수는 Variable `rondo_attempts_per_cycle`(기본 3)이 정한다 — fold-1 futility stop으로
+일찍 끝난 attempt의 big 슬롯을 다음 attempt가 채우게 하려는 스위치다. gate의 `--min-done`은 Variable `rondo_gate_min_done`.
 """
 from __future__ import annotations
 
 from datetime import timedelta
 
 import pendulum
-from airflow.sdk import dag
+from airflow.sdk import Variable, dag
 from airflow.providers.docker.operators.docker import DockerOperator as _DockerBase
 from lib.alert import notify_discord_on_failure
 
@@ -42,6 +45,18 @@ class DockerOperator(_DockerBase):
 # 즉시 반영. 최초 배포 전 `rondo_task_image_version`을 현재 라이브 태그로 1회
 # 수동 설정해야 한다(비어있으면 이미지 참조가 깨짐).
 IMAGE = "registry.internal:5000/reflexion-rondo/task:{{ var.value.rondo_task_image_version }}"
+
+
+def _attempts_per_cycle() -> int:
+    """cycle당 attempt 수(reflexion-rondo#520, ADR-076). task 수가 파싱 시점에 정해져야 해서 템플릿이 아니라 여기서 조회한다.
+    조회가 실패해도 DAG import가 깨지면 안 되므로 기본값 3으로 폴백한다."""
+    try:
+        return max(1, int(Variable.get("rondo_attempts_per_cycle", default=3)))
+    except Exception:
+        return 3
+
+
+N_ATTEMPTS = _attempts_per_cycle()
 
 _DOCKER_BASE = dict(
     image=IMAGE,
@@ -92,6 +107,7 @@ def reflexion_rondo_cycle() -> None:
             " --stage {{ dag_run.conf['stage'] }}"
             " --queue-id {{ dag_run.conf['queue_id'] }}"
             " --run-id {{ run_id }}"
+            f" --n-attempts {N_ATTEMPTS}"
         ),
         environment=_ENV,
         execution_timeout=timedelta(minutes=15),
@@ -113,7 +129,7 @@ def reflexion_rondo_cycle() -> None:
             execution_timeout=timedelta(minutes=45),
             **_DOCKER_HEAVY,
         )
-        for i in range(3)
+        for i in range(N_ATTEMPTS)
     ]
 
     # attempt_i를 DagRun의 진짜 leaf로 두면 Airflow가 DagRun 상태를 attempt_i 자신의
@@ -132,7 +148,7 @@ def reflexion_rondo_cycle() -> None:
             execution_timeout=timedelta(minutes=5),
             **_DOCKER_LIGHT,
         )
-        for i in range(3)
+        for i in range(N_ATTEMPTS)
     ]
 
     attempt_gate = DockerOperator(
@@ -140,7 +156,8 @@ def reflexion_rondo_cycle() -> None:
         command=(
             "uv run --no-sync python -m bin.run_attempt_gate_task"
             " --run-id {{ run_id }}"
-            " --expected 3 --min-done 2"
+            f" --expected {N_ATTEMPTS}"
+            " --min-done {{ var.value.get('rondo_gate_min_done', '2') }}"
         ),
         environment={
             **_ENV,
